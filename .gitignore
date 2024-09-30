@@ -4,6 +4,9 @@
 # Add IntelliJ IDEA files
 .idea/
 
+# Add .vscode files
+.vscode/
+
 # Ignore dialogue_export
 dialogue_export/
 
