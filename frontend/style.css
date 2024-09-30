@@ -1,0 +1,27 @@
+/* styles.css */
+      /* Custom CSS for chat and playlist layout */
+      #chatWidgetContainer {
+        height: 400px; /* Set a height for the chat */
+        border: 1px solid #ddd; /* Add a border for distinction */
+        border-radius: 5px; /* Round the corners */
+        padding: 10px; /* Add padding inside the chat */
+        background-color: #f8f9fa; /* Light background color */
+      }
+
+      .sidebar {
+        position: sticky;
+        top: 20px; /* Keep the sidebar sticky */
+        background-color: #87ceeb; /* Light blue background for the playlist */
+        border-radius: 10px; /* Rounded corners */
+        padding: 15px; /* Add padding inside the sidebar */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+      }
+
+      .playlist-item {
+        cursor: pointer; /* Change cursor on hover */
+      }
+
+      .playlist-item:hover {
+          background-color: #b2ebf2;
+      }/* Change background on hover */
+
