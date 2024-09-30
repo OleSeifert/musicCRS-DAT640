@@ -1,6 +1,12 @@
 # Ds store
 *.DS_Store
 
+# Add IntelliJ IDEA files
+.idea/
+
+# Ignore dialogue_export
+dialogue_export/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

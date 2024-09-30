@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Information Retrieval Group Project</title>
+    <title>Music Recommender System</title>
     <link
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
@@ -11,23 +11,52 @@
   </head>
   <body>
     <div class="container">
-      <h1 class="mt-5">Welcome to the Information Retrieval Group Project</h1>
-      <p class="lead">This is a basic HTML skeleton with Bootstrap included.</p>
-    </div>
-    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+      <h1 class="mt-5">Welcome to the Music Recommender System</h1>
+      <p class="lead">Where you can create cool playlists.</p>
 
-    <div
-      id="chatWidgetContainer"
-      data-name="Chatbot"
-      data-server-url="http://127.0.0.1:5000"
-      data-use-feedback
-      data-use-login
-    ></div>
+      <!-- Chatbot with flex -->
+      <div class="col-md-6"></div>
+        <div
+          id="chatWidgetContainer"
+          data-name="Chatbot"
+          data-server-url="http://127.0.0.1:5000"
+          data-use-feedback
+          data-use-login
+        ></div>
+      </div>
+
+
+      <!-- Sidebar for the playlist -->
+      <div class="col-md-4 sidebar">
+        <h5>Playlist</h5>
+        <ul class="list-group">
+          <li class="list-group-item">Song 1</li>
+        </ul>
+      </div>
+
+      <!-- Collapsable help section -->
+      <div class="mt-4 text-center">
+        <button
+          class="btn btn-primary"
+          data-toggle="collapse"
+          data-target="#helpCollapse"
+          aria-expanded="false"
+          aria-controls="helpCollapse"
+        >
+          Help
+        </button>
+        <div class="collapse" id="helpCollapse">
+          <div class="card card-body mt-2">
+            Here you can find help regarding the project. Feel free to ask questions!
+          </div>
+        </div>
+    </div>
   </body>
 </html>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/iaigroup-chatwidget@latest/build/bundle.min.js"
