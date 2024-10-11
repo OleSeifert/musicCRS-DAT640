@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:commands="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,30 +8,34 @@
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="style.css" />
   </head>
+
+
   <body>
     <div class="container">
       <h1 class="mt-5">Welcome to the Music Recommender System</h1>
       <p class="lead">Where you can create cool playlists.</p>
 
-      <!-- Chatbot with flex -->
-      <div class="col-md-6"></div>
-        <div
-          id="chatWidgetContainer"
-          data-name="Chatbot"
-          data-server-url="http://127.0.0.1:5000"
-          data-use-feedback
-          data-use-login
-        ></div>
-      </div>
+      <div class="row">
+        <!-- Chatbot container -->
+        <div class="col-md-8">
+          <div id="chatWidgetContainer"
+            data-name="Chatbot"
+            data-server-url="http://127.0.0.1:5000"
+            data-use-feedback
+            data-use-login
+          ></div>
+        </div>
 
-
-      <!-- Sidebar for the playlist -->
-      <div class="col-md-4 sidebar">
-        <h5>Playlist</h5>
-        <ul class="list-group" id="songList">
+        <!-- Sidebar for the playlist -->
+        <div class="col-md-4 sidebar">
+          <h5>Playlist</h5>
+          <ul class="list-group" id="songList">
           <!-- Songs will be dynamically inserted here -->
-        </ul>
+          </ul>
+        </div>
+
       </div>
 
       <!-- Collapsable help section -->
@@ -49,7 +53,7 @@
           <div class="card card-body mt-2">
             <p>
               <strong>How to use the Music Recommender System</strong><br>
-              The Music Recommender System is a project that allows you to create playlists.<br
+              The Music Recommender System is a project that allows you to create playlists.<br>
 
               It supports the following commands:
               <ul>
@@ -62,6 +66,7 @@
             </p>
           </div>
         </div>
+      </div>
     </div>
   </body>
 </html>
