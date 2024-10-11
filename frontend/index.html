@@ -31,12 +31,11 @@
         <!-- Sidebar for the playlist -->
         <div class="col-md-4 sidebar">
           <h5>Playlist</h5>
-          <ul class="list-group">
-            <li class="list-group-item playlist-item">Song 1</li>
-            <li class="list-group-item playlist-item">Song 2</li>
-            <li class="list-group-item playlist-item">Song 3</li>
+          <ul class="list-group" id="songList">
+          <!-- Songs will be dynamically inserted here -->
           </ul>
         </div>
+
       </div>
 
       <!-- Collapsable help section -->
@@ -79,3 +78,24 @@
       type="text/javascript"
       src="https://cdn.jsdelivr.net/npm/iaigroup-chatwidget@latest/build/bundle.min.js"
     ></script>
+    <script>
+      // Fetch the songs from the server and display them
+     // Fetch songs from the server and display them
+    fetch('http://127.0.0.1:5002/songs') // Ensure this matches your Flask server's URL
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+      })
+    .then(songs => {
+      const songList = document.getElementById('songList');
+      songs.forEach(song => {
+        const li = document.createElement('li');
+        li.className = 'list-group-item';
+        li.textContent = song;
+        songList.appendChild(li);
+      });
+    })
+    .catch(error => console.error('Error fetching songs:', error));
+    </script>
