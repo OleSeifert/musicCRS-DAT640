@@ -10,6 +10,9 @@
 # Ignore dialogue_export
 dialogue_export/
 
+# Ignore .db files
+*.db
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
