@@ -5,7 +5,10 @@ from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.agent import Agent
 from dialoguekit.participant.participant import DialogueParticipant
 import sqlite3
-import re
+import requests
+
+from data.database_manager import DatabaseManager
+
 
 def connect_db():
     return sqlite3.connect('../data/final_database.db')
@@ -24,6 +27,7 @@ class PlaylistAgent(Agent):
             agent_id: Agent id.
         """
         super().__init__(agent_id)
+        self.dbmanager = DatabaseManager('../data/final_database.db')
 
     def find_song_in_db(self, song_title, artist=None):
         """Find a song in the database."""
@@ -115,17 +119,21 @@ class PlaylistAgent(Agent):
         # Estrai il titolo e l'artista dal comando usando la funzione parse_command
         song_title, artist = self.parse_command(command)
 
-        song, equal_songs = self.find_song_in_db(song_title, artist)
+        song, equal_songs = self.dbmanager.find_song_by_title_and_artist(song_title, artist)
         if(song):
-            song_name = song[16]
-            artist = song[5]
+            song_name = song.track_name
         else:
             song_name = song_title
 
         if song:
-            with open("../data/playlist.txt", "a", encoding="utf-8") as file:
-                file.write(song_name +" by " + artist + "\n")
+            song_data = song.serialize()
 
+            # Invia la richiesta POST al server Flask
+            url = 'http://localhost:5002/add_song'
+            response = requests.post(url, json=song_data)
+            if response.status_code != 201:
+                print(f"Error: {response.status_code}")
+                return
             if equal_songs > 1:
                 utterance = AnnotatedUtterance(
                     f"I found {equal_songs} songs with the name {song_name}, I added my favourite one to the playlist, be more precise if you want one in particular!",
@@ -146,24 +154,58 @@ class PlaylistAgent(Agent):
 
     def view_playlist(self) -> None:
         """Shows the current playlist."""
-        with open("../data/playlist.txt", "r", encoding="utf-8") as file:
-            playlist = file.readlines()
-            playlist = [song.strip() for song in playlist]
+
+        url = 'http://localhost:5002/songs_string'
+
+        # Invia la richiesta GET
+        response = requests.get(url)
 
         utterance = AnnotatedUtterance(
-            f"Here is the current playlist: {playlist}",
+            f"Here is the current playlist: {response.text}",
             participant=DialogueParticipant.AGENT,
         )
         self._dialogue_connector.register_agent_utterance(utterance)
 
-    def delete_playlist(self) -> None:
+    def delete_song(self, song_name: str) -> None:
+        # URL dell'endpoint
+        url = 'http://localhost:5002/delete_song'
+
+        # Crea il payload JSON con il nome della canzone
+        delete_data = {
+            "track_name": song_name
+        }
+
+        response = requests.delete(url, json=delete_data)
+        if response.status_code == 200:
+            utterance = AnnotatedUtterance(
+                f"The song {song_name}  has been removed from the playlist",
+                participant=DialogueParticipant.AGENT,
+            )
+        elif response.status_code == 401:
+            utterance = AnnotatedUtterance(
+                f"The song {song_name} is not in the playlist",
+                participant=DialogueParticipant.AGENT,
+            )
+        self._dialogue_connector.register_agent_utterance(utterance)
+
+    def clear_playlist(self) -> None:
         """Deletes the current playlist."""
-        with open("../data/playlist.txt", "w", encoding="utf-8") as file:
-            file.write("")
-        utterance = AnnotatedUtterance(
-            "The playlist is now empty!",
-            participant=DialogueParticipant.AGENT,
-        )
+        # URL dell'endpoint per cancellare tutte le canzoni
+        url = 'http://localhost:5002/clear_playlist'
+
+        # Invia la richiesta DELETE per svuotare la playlist
+        response = requests.delete(url)
+
+        if response.status_code == 200:
+            utterance = AnnotatedUtterance(
+                "The playlist is now empty!",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                "Error: The playlist could not be cleared",
+                participant=DialogueParticipant.AGENT,
+            )
         self._dialogue_connector.register_agent_utterance(utterance)
 
     def receive_utterance(self, utterance: Utterance) -> None:
@@ -187,7 +229,11 @@ class PlaylistAgent(Agent):
             return
 
         if self.separate_utterance(utterance.text)[0] == "/clear":
-            self.delete_playlist()
+            self.clear_playlist()
+            return
+
+        if self.separate_utterance(utterance.text)[0] == "/delete":
+            self.delete_song(self.separate_utterance(utterance.text)[1])
             return
 
         if self.separate_utterance(utterance.text)[0] == "/help":

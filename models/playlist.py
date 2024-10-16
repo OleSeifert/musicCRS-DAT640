@@ -19,11 +19,14 @@ class Playlist:
             if song.track_name == track_name:
                 self.songs.remove(song)
                 print(f"Removed '{track_name}' from the playlist.")
-                return
-        print(f"Song '{track_name}' not found in the playlist.")
-
+                return 0
+        return -1
     def __str__(self):
         # Restituisce una rappresentazione in stringa della playlist con tutte le canzoni
         playlist_str = f"Playlist: {self.name}\n"
         playlist_str += "\n".join([f"{idx + 1}. {song.track_name} by {song.artist_0}" for idx, song in enumerate(self.songs)])
         return playlist_str if self.songs else f"Playlist: {self.name} (empty)"
+
+    def clear(self):
+        self.songs = []
+        print(f"All songs have been removed from the playlist.")
