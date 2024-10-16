@@ -18,9 +18,9 @@ app = Flask(__name__)
 CORS(app)
 
 playlist = Playlist("My Playlist")
-playlist.add_song(Song("I Won't Give Up", "Jason Mraz"))
-playlist.add_song(Song("93 Million Miles", "Jason Mraz"))
-playlist.add_song(Song("Let It Be", "The Beatles"))
+playlist.add_song(Song(track_name="I Won't Give Up", artist_0="Jason Mraz"))
+playlist.add_song(Song(track_name="93 Million Miles", artist_0="Jason Mraz"))
+playlist.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
 
 @app.route("/songs", methods=["GET"])
 def get_songs():

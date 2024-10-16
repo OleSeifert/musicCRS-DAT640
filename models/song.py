@@ -1,7 +1,7 @@
 class Song:
-    def __init__(self, track_name, artist_0, album_id=None, album_name=None, album_popularity=None, album_type=None,
-                 artists=None, artist_1=None, artist_2=None, artist_3=None, artist_4=None,
-                 artist_id=None, duration_sec=None, label=None, release_date=None, total_tracks=None, track_id=None,
+    def __init__(self,  album_id=None, album_name=None, album_popularity=None, album_type=None,
+                 artists=None, artist_0 = None, artist_1=None, artist_2=None, artist_3=None, artist_4=None,
+                 artist_id=None, duration_sec=None, label=None, release_date=None, total_tracks=None, track_id=None,track_name = None,
                  track_number=None, artist_genres=None, artist_popularity=None,
                  followers=None, name=None, genre_0=None, genre_1=None, genre_2=None, genre_3=None, genre_4=None,
                  acousticness=None, analysis_url=None, danceability=None, duration_ms=None, energy=None,
