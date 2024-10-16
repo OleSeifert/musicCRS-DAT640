@@ -4,6 +4,11 @@ from dialoguekit.core.annotated_utterance import AnnotatedUtterance
 from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.agent import Agent
 from dialoguekit.participant.participant import DialogueParticipant
+import sqlite3
+import re
+
+def connect_db():
+    return sqlite3.connect('../data/final_database.db')
 
 
 class PlaylistAgent(Agent):
@@ -19,6 +24,59 @@ class PlaylistAgent(Agent):
             agent_id: Agent id.
         """
         super().__init__(agent_id)
+
+    def find_song_in_db(self, song_title, artist=None):
+        """Find a song in the database."""
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        if artist:
+            cursor.execute("SELECT * FROM music WHERE track_name=? AND artists LIKE ?", (song_title, f"%{artist}%"))
+        else:
+            cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
+
+        result = cursor.fetchall()  # Prende tutte le occorrenze
+
+        conn.close()
+
+        if result:
+            return result[0], len(result)  # Per ora prendiamo solo la prima
+        else:
+            return None, None
+
+    def parse_command(self, command):
+        """Parse il comando e separa artista e titolo, utilizzando i separatori ' : ' e ' by '."""
+        command = command.strip()
+
+        # Cerca l'ultimo separatore ' by ' o ' : '
+        by_pos = command.lower().rfind(" by ")
+        colon_pos = command.rfind(" : ")
+
+        if by_pos == -1 and colon_pos == -1:
+            # Se non ci sono separatori, considera solo il titolo della canzone
+            return command, None
+
+        # Usa il separatore che appare per ultimo
+        if by_pos > colon_pos:
+            separator_pos = by_pos
+            separator_len = 4  # Lunghezza di " by "
+            artist_first = False
+        else:
+            separator_pos = colon_pos
+            separator_len = 3  # Lunghezza di " : "
+            artist_first = True
+
+        # Dividi la stringa in base al separatore trovato
+        if artist_first:
+            # Se 'artista : titolo'
+            artist = command[:separator_pos].strip()
+            song_title = command[separator_pos + separator_len:].strip()
+        else:
+            # Se 'titolo by artista'
+            song_title = command[:separator_pos].strip()
+            artist = command[separator_pos + separator_len:].strip()
+
+        return song_title, artist
 
     def welcome(self) -> None:
         """Sends the agent's welcome message."""
@@ -52,20 +110,39 @@ class PlaylistAgent(Agent):
         """
         return text.split(" ", maxsplit=1)
 
-    def add_song(self, song: str) -> None:
-        """Adds a song to the playlist.
 
-        Args:
-            song: Song to be added to the playlist.
-        """
-        with open("../data/playlist.txt", "a", encoding="utf-8") as file:
-            file.write(song + "\n")
+    def add_song(self, command) -> None:
+        # Estrai il titolo e l'artista dal comando usando la funzione parse_command
+        song_title, artist = self.parse_command(command)
 
-        utterance = AnnotatedUtterance(
-            f"The song {song} is now added to the playlist!",
-            participant=DialogueParticipant.AGENT,
-        )
-        self._dialogue_connector.register_agent_utterance(utterance)
+        song, equal_songs = self.find_song_in_db(song_title, artist)
+        if(song):
+            song_name = song[16]
+            artist = song[5]
+        else:
+            song_name = song_title
+
+        if song:
+            with open("../data/playlist.txt", "a", encoding="utf-8") as file:
+                file.write(song_name +" by " + artist + "\n")
+
+            if equal_songs > 1:
+                utterance = AnnotatedUtterance(
+                    f"I found {equal_songs} songs with the name {song_name}, I added my favourite one to the playlist, be more precise if you want one in particular!",
+                    participant=DialogueParticipant.AGENT,
+                )
+            else:
+                utterance = AnnotatedUtterance(
+                    f"The song {song_title} is added to the playlist",
+                    participant=DialogueParticipant.AGENT,
+                )
+            self._dialogue_connector.register_agent_utterance(utterance)
+        else:
+            utterance = AnnotatedUtterance(
+                f"The song {song_name} is not in our Database",
+                participant=DialogueParticipant.AGENT,
+            )
+            self._dialogue_connector.register_agent_utterance(utterance)
 
     def view_playlist(self) -> None:
         """Shows the current playlist."""
