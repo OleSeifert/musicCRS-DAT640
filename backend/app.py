@@ -88,8 +88,9 @@ def add_song():
     )
 
     # Aggiungiamo la canzone alla playlist
-    playlist.add_song(new_song)
-
+    result = playlist.add_song(new_song)
+    if result == -1:
+        return jsonify({"error": f"'{data.get('track_name')}' by {data.get('artist_0')} is already in the playlist"}), 401
     return jsonify({"message": f"'{data.get('track_name')}' by {data.get('artist_0')} added to the playlist"}), 201
 
 @app.route("/delete_song", methods=["DELETE"])

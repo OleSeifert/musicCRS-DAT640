@@ -131,9 +131,18 @@ class PlaylistAgent(Agent):
             # Invia la richiesta POST al server Flask
             url = 'http://localhost:5002/add_song'
             response = requests.post(url, json=song_data)
-            if response.status_code != 201:
+
+            if response.status_code == 401:
+                utterance = AnnotatedUtterance(
+                    f"The song {song} is already in the playlist",
+                    participant=DialogueParticipant.AGENT,
+                )
+                self._dialogue_connector.register_agent_utterance(utterance)
+                return
+            elif response.status_code != 201:
                 print(f"Error: {response.status_code}")
                 return
+
             if equal_songs > 1:
                 utterance = AnnotatedUtterance(
                     f"I found {equal_songs} songs with the name {song_name}, I added my favourite one to the playlist, be more precise if you want one in particular!",
@@ -221,6 +230,13 @@ class PlaylistAgent(Agent):
             return
 
         if self.separate_utterance(utterance.text)[0] == "/add":
+            if len(self.separate_utterance(utterance.text)) < 2:
+                utterance = AnnotatedUtterance(
+                    "Please provide the name of the song you want to add",
+                    participant=DialogueParticipant.AGENT,
+                )
+                self._dialogue_connector.register_agent_utterance(utterance)
+                return
             self.add_song(self.separate_utterance(utterance.text)[1])
             return
 
@@ -233,6 +249,13 @@ class PlaylistAgent(Agent):
             return
 
         if self.separate_utterance(utterance.text)[0] == "/delete":
+            if len(self.separate_utterance(utterance.text)) < 2:
+                utterance = AnnotatedUtterance(
+                    "Please provide the name of the song you want to delete",
+                    participant=DialogueParticipant.AGENT,
+                )
+                self._dialogue_connector.register_agent_utterance(utterance)
+                return
             self.delete_song(self.separate_utterance(utterance.text)[1])
             return
 

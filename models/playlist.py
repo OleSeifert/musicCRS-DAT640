@@ -8,10 +8,15 @@ class Playlist:
     def add_song(self, song):
         # Aggiungi una canzone alla playlist
         if isinstance(song, Song):
+            if song in self.songs:
+                print(f"'{song.track_name}' by {song.artist_0} is already in the playlist.")
+                return -1
             self.songs.append(song)
             print(f"Added '{song.track_name}' by {song.artist_0} to the playlist.")
+            return 0
         else:
             print("Error: Only Song objects can be added.")
+            return -2
 
     def remove_song(self, track_name):
         # Rimuovi una canzone dalla playlist cercandola per nome traccia
