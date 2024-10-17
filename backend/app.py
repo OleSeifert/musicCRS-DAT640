@@ -138,7 +138,7 @@ def delete_song():
 def get_songs_as_string():
     """Restituisce tutte le canzoni in una singola stringa, separate da un delimitatore."""
     # Usa il metodo __str__ per ogni oggetto Song e uniscile in una singola stringa
-    songs_string = "//".join([str(song) for song in playlist.songs])
+    songs_string = " // ".join([str(song) for song in playlist.songs])
     return songs_string, 200
 
 
