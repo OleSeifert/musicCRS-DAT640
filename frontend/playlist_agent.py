@@ -9,6 +9,7 @@ from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.agent import Agent
 from dialoguekit.participant.participant import DialogueParticipant
 
+from backend import parsing
 from data.database_manager import DatabaseManager
 
 
@@ -224,6 +225,80 @@ class PlaylistAgent(Agent):
             )
         self._dialogue_connector.register_agent_utterance(utterance)
 
+    # ---- Question handling ----
+
+    def find_album_release_date(self, album_name: str) -> None:
+        """Finds the release date of an album.
+
+        Is used for the question "When was album X released?".
+
+        Args:
+            album_name: Album name.
+        """
+        # Get the release date of the album from the db
+        release_date = self.dbmanager.find_album_release_date(album_name)
+
+        if release_date:
+            # Parse the date
+            month, year = parsing.helper_parse_release_date(release_date)
+
+            utterance = AnnotatedUtterance(
+                f"The album {album_name} was released in {month} {year}",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+        self.dialogue_connector.register_agent_utterance(utterance)
+
+    def find_number_of_albums_by_artist(self, artist_name: str) -> None:
+        """Finds the number of albums by an artist.
+
+        Is used for the question "How many albums has artist Y released?".
+
+        Args:
+            artist_name: Artist name.
+        """
+        # Get the number of albums by the artist from the db
+        num_albums = self.dbmanager.number_of_albums_by_artist(artist_name)
+
+        if num_albums:
+            utterance = AnnotatedUtterance(
+                f"{artist_name} has released {num_albums} albums.",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                f"Sorry, I couldn't find any albums by {artist_name}.",
+                participant=DialogueParticipant.AGENT,
+            )
+        self.dialogue_connector.register_agent_utterance(utterance)
+
+    def find_album_for_song(self, song_title: str) -> None:
+        """Finds the album which contains a song.
+
+        Is used for the question "Which album features song X?".
+
+        Args:
+            song_title: Song title.
+        """
+        # Get the album from the db
+        album_name, artist_name = self.dbmanager.album_for_song(song_title)
+
+        if album_name:
+            utterance = AnnotatedUtterance(
+                f"The album that features the song {song_title} is {album_name} by {artist_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album for the song {song_title}",
+                participant=DialogueParticipant.AGENT,
+            )
+        self.dialogue_connector.register_agent_utterance(utterance)
+
     def receive_utterance(self, utterance: Utterance) -> None:
         """Gets called each time there is a new user utterance.
 
@@ -269,6 +344,43 @@ class PlaylistAgent(Agent):
         if self.separate_utterance(utterance.text)[0] == "/help":
             self.welcome()
             return
+
+        # ---- Handle questions ----
+        if "When was album" in utterance.text:  # A bit hard-coded but works for now
+            album_name = parsing.extract_album_from_question(utterance.text)
+            if album_name:
+                self.find_album_release_date(album_name)
+                return
+            # Tell user album does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name} in the database",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        if "How many albums has artist" in utterance.text:
+            artist_name = parsing.extract_artist_from_question(utterance.text)
+            if artist_name:
+                self.find_number_of_albums_by_artist(artist_name)
+                return
+            # Tell user artist does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find any albums by {artist_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        if "Which album features song" in utterance.text:
+            song_name = parsing.extract_song_from_question_for_album(utterance.text)
+            if song_name:
+                self.find_album_for_song(song_name)
+                return
+            # Tell user song does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album for the song {song_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
 
         response = AnnotatedUtterance(
             "(Parroting) " + utterance.text,

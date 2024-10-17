@@ -3,7 +3,7 @@
 import datetime
 import os
 import sqlite3
-from typing import Union
+from typing import Tuple, Union
 
 from models.song import Song
 
@@ -147,7 +147,7 @@ class DatabaseManager:
 
         try:
             cursor.execute(
-                "SELECT release_date FROM music_table WHERE album_name=?", (album_name,)
+                "SELECT release_date FROM music WHERE album_name=?", (album_name,)
             )
             result = cursor.fetchone()
 
@@ -160,7 +160,8 @@ class DatabaseManager:
             connection.close()
 
         if result:
-            return datetime.datetime.strptime(result[0], "%Y-%m-%d").date()
+            print(result)
+            return result[0]
         return None
 
     def number_of_albums_by_artist(self, artist_name: str) -> Union[int, None]:
@@ -180,44 +181,10 @@ class DatabaseManager:
         cursor = connection.cursor()
 
         try:
-            # TODO: Fix query
-            # cursor.execute(
-            #     "SELECT COUNT(*) FROM music_table WHERE artists LIKE ?", (f"%{artist_name}%",)
-            # )
-            result = cursor.fetchone()
-
-        except sqlite3.Error as e:
-            print(f"Error: {e}")
-            return None
-
-        finally:
-            cursor.close()
-            connection.close()
-
-        if result:
-            return result
-        return None
-
-    def album_for_song(self, song_title: str) -> Union[str, None]:
-        """Fetches the album, which contains a song.
-
-        Returns None if the song is not found.
-
-        Args:
-            song_title: Song title.
-
-        Returns:
-            Union[str, None]: Album for the song or None if not found.
-        """
-        # Setup
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-
-        try:
-            # TODO: Fix query later
-            # cursor.execute(
-            #     "SELECT album_name FROM music_table WHERE track_name=?", (song_title,)
-            # )
+            cursor.execute(
+                "SELECT COUNT(DISTINCT album_id) FROM music WHERE artist_0=?",
+                (artist_name,),
+            )
             result = cursor.fetchone()
 
         except sqlite3.Error as e:
@@ -231,3 +198,41 @@ class DatabaseManager:
         if result:
             return result[0]
         return None
+
+    def album_for_song(
+        self, song_title: str
+    ) -> Union[Tuple[str, str], Tuple[None, None]]:
+        """Fetches the album, which contains a song.
+
+        Returns None if the song is not found.
+
+        Args:
+            song_title: Song title.
+
+        Returns:
+            The tuple of album name and artist name or the tuple of None, None
+              if not found.
+        """
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            # Return also the artist and the album for the song
+            cursor.execute(
+                "SELECT album_name, artist_0 FROM music WHERE track_name=?",
+                (song_title,),
+            )
+            result = cursor.fetchone()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result[0], result[1]
+        return None, None
