@@ -66,7 +66,7 @@ class DatabaseManager:
             print(f"Error: {e}")
             return None
 
-        finally:
+        finally:  # Tear down
             cursor.close()
             connection.close()
 
@@ -140,6 +140,9 @@ class DatabaseManager:
         Returns:
             Union[datetime.date, None]: Release date of the album or None if not
               found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
         """
         # Setup
         connection = sqlite3.connect(self.db_path)
@@ -155,7 +158,7 @@ class DatabaseManager:
             print(f"Error: {e}")
             return None
 
-        finally:
+        finally:  # Tear down
             cursor.close()
             connection.close()
 
@@ -175,6 +178,9 @@ class DatabaseManager:
         Returns:
             Union[int, None]: Number of albums by the artist or None if not
               found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
         """
         # Setup
         connection = sqlite3.connect(self.db_path)
@@ -191,12 +197,207 @@ class DatabaseManager:
             print(f"Error: {e}")
             return None
 
-        finally:
+        finally:  # Tear down
             cursor.close()
             connection.close()
 
         if result:
             return result[0]
+        return None
+
+    def number_of_songs_on_album(self, album_name: str) -> Union[int, None]:
+        """Fetches the number of songs on an album.
+
+        Args:
+            album_name: Album name.
+
+        Returns:
+            Union[int, None]: Number of songs on the album or None if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(
+                "SELECT total_tracks FROM music WHERE album_name=?",
+                (album_name,),
+            )
+            result = cursor.fetchone()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:  # Tear down
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result[0]
+
+        return None
+
+    def duration_of_album(self, album_name: str) -> Union[float, None]:
+        """Fetches the duration of an album.
+
+        The duration is in seconds.
+
+        Args:
+            album_name: Album name.
+
+        Returns:
+            Union[float, None]: Duration of the album or None if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            # First get the album_id
+            album_id = self.get_id_for_album(album_name)
+            if album_id:
+                cursor.execute(
+                    "SELECT SUM(duration_sec) FROM music WHERE album_id=?",
+                    (album_id,),
+                )
+                result = cursor.fetchone()
+            else:
+                return None
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:  # Tear down
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result[0]
+
+        return None
+
+    def most_popular_song_by_artist(self, artist_name: str) -> Union[str, None]:
+        """Fetches the most popular song by an artist.
+
+        It uses the function get_artist_id to get the artist ID. The most
+        popular song is fetched by the artist ID.
+
+        Args:
+            artist_name: Artist name.
+
+        Returns:
+            Union[str, None]: Most popular song by the artist or None if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            artist_id = self.get_id_for_artist(artist_name)
+
+            if artist_id:
+                cursor.execute(
+                    "SELECT track_name FROM music WHERE artist_id=? ORDER BY track_popularity DESC",
+                    (artist_id,),
+                )
+                result = cursor.fetchone()
+            else:
+                return None
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:  # Tear down
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result[0]
+
+        return None
+
+    def get_id_for_album(self, album_name: str) -> Union[str, None]:
+        """Fetches the ID for an album.
+
+        It is used to help the duration_of_album method.
+
+        Args:
+            album_name: Album name.
+
+        Returns:
+            Union[str, None]: Album ID or None if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(
+                "SELECT album_id FROM music WHERE album_name=?", (album_name,)
+            )
+            result = cursor.fetchone()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:  # Tear down
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result[0]
+
+        return None
+
+    def get_id_for_artist(self, artist_name: str) -> Union[str, None]:
+        """Fetches the ID for an artist.
+
+        Args:
+            artist_name: Artist name.
+
+        Returns:
+            Union[str, None]: Artist ID or None if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(
+                "SELECT artist_id FROM music WHERE artist_0=?", (artist_name,)
+            )
+            result = cursor.fetchone()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:  # Tear down
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result[0]
+
         return None
 
     def album_for_song(
@@ -212,6 +413,9 @@ class DatabaseManager:
         Returns:
             The tuple of album name and artist name or the tuple of None, None
               if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
         """
         # Setup
         connection = sqlite3.connect(self.db_path)
@@ -229,7 +433,7 @@ class DatabaseManager:
             print(f"Error: {e}")
             return None
 
-        finally:
+        finally:  # Tear down
             cursor.close()
             connection.close()
 
