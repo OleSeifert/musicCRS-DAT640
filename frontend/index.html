@@ -109,3 +109,35 @@
         fetchSongsAndUpdate();
         setInterval(fetchSongsAndUpdate, 5000);
     </script>
+
+<script>
+  function fetchSuggestionsAndUpdate() {
+    fetch('http://127.0.0.1:5002/getSuggestions')
+      .then(response => response.json())
+      .then(data => {
+        if (data.suggestions) {
+          updateQuickReplies(data.suggestions); // Function to handle the UI update
+        }
+      })
+      .catch(error => console.error('Error fetching suggestions:', error));
+  }
+
+  function updateQuickReplies(suggestions) {
+    const quickRepliesContainer = document.getElementById('chatWidgetContainer');
+    suggestions.forEach(suggestion => {
+      const button = document.createElement('button');
+      button.className = 'quick-reply';
+      button.textContent = suggestion;
+      button.onclick = () => sendMessage(suggestion);
+      quickRepliesContainer.appendChild(button);
+    });
+  }
+
+  // Fetch suggestions when the page loads
+  window.onload = function() {
+    fetchSuggestionsAndUpdate();
+  };
+
+</script>
+
+

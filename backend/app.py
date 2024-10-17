@@ -127,6 +127,12 @@ def clear_playlist():
     playlist.clear()  # Pulisce la lista delle canzoni
     return jsonify({"message": "All songs have been removed from the playlist"}), 200
 
+@app.route('/getSuggestions', methods=['GET'])
+def get_suggestions():
+    suggestions = ["Play music", "Create playlist", "Show recommendations"]
+    return jsonify({"suggestions": suggestions})
+
+
 
 if __name__ == "__main__":
     app.run(port=5002)

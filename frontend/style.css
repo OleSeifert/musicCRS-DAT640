@@ -25,3 +25,13 @@
           background-color: #b2ebf2;
       }/* Change background on hover */
 
+      #chatWidgetContainer .quick-reply {
+          background-color: #87ceeb !important;
+          color: black !important;
+          border: 1px solid #ddd;
+          padding: 10px !important;
+          border-radius: 10px !important;
+          margin: 5px !important;
+          cursor: pointer;
+}
+
