@@ -1,8 +1,10 @@
 """Contains the DatabaseManager class."""
 
 import datetime
+import os
 import sqlite3
 from typing import Union
+
 from models.song import Song
 
 
@@ -19,7 +21,7 @@ class DatabaseManager:
         Args:
             db_path: Path to the database.
         """
-        self.db_path = db_path
+        self.db_path = os.path.abspath(db_path)
 
     def find_song_by_title_and_artist(
         self, song_title: str, artist: str = None
@@ -59,8 +61,6 @@ class DatabaseManager:
             else:  # Artist is not provided
                 cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
                 results = cursor.fetchall()
-
-
 
         except sqlite3.Error as e:
             print(f"Error: {e}")
@@ -123,7 +123,7 @@ class DatabaseManager:
                 track_popularity=first_result[45],
                 release_year=first_result[46],
                 release_month=first_result[47],
-                rn=first_result[48]
+                rn=first_result[48],
             )
             return song, total_results
         else:

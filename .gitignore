@@ -13,6 +13,9 @@ dialogue_export/
 # Ignore .db files
 *.db
 
+# .env file
+.env
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,17 +1,19 @@
 """Simplest possible agent that parrots back everything the user says."""
 
+import os
+import sqlite3
+
+import requests
 from dialoguekit.core.annotated_utterance import AnnotatedUtterance
 from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.agent import Agent
 from dialoguekit.participant.participant import DialogueParticipant
-import sqlite3
-import requests
 
 from data.database_manager import DatabaseManager
 
 
 def connect_db():
-    return sqlite3.connect('../data/final_database.db')
+    return sqlite3.connect("../data/final_database.db")
 
 
 class PlaylistAgent(Agent):
@@ -27,7 +29,10 @@ class PlaylistAgent(Agent):
             agent_id: Agent id.
         """
         super().__init__(agent_id)
-        self.dbmanager = DatabaseManager('../data/final_database.db')
+        db_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../data/final_database.db")
+        )
+        self.dbmanager = DatabaseManager(db_path)
 
     def find_song_in_db(self, song_title, artist=None):
         """Find a song in the database."""
@@ -35,7 +40,10 @@ class PlaylistAgent(Agent):
         cursor = conn.cursor()
 
         if artist:
-            cursor.execute("SELECT * FROM music WHERE track_name=? AND artists LIKE ?", (song_title, f"%{artist}%"))
+            cursor.execute(
+                "SELECT * FROM music WHERE track_name=? AND artists LIKE ?",
+                (song_title, f"%{artist}%"),
+            )
         else:
             cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
 
@@ -74,11 +82,11 @@ class PlaylistAgent(Agent):
         if artist_first:
             # Se 'artista : titolo'
             artist = command[:separator_pos].strip()
-            song_title = command[separator_pos + separator_len:].strip()
+            song_title = command[separator_pos + separator_len :].strip()
         else:
             # Se 'titolo by artista'
             song_title = command[:separator_pos].strip()
-            artist = command[separator_pos + separator_len:].strip()
+            artist = command[separator_pos + separator_len :].strip()
 
         return song_title, artist
 
@@ -114,13 +122,14 @@ class PlaylistAgent(Agent):
         """
         return text.split(" ", maxsplit=1)
 
-
     def add_song(self, command) -> None:
         # Estrai il titolo e l'artista dal comando usando la funzione parse_command
         song_title, artist = self.parse_command(command)
 
-        song, equal_songs = self.dbmanager.find_song_by_title_and_artist(song_title, artist)
-        if(song):
+        song, equal_songs = self.dbmanager.find_song_by_title_and_artist(
+            song_title, artist
+        )
+        if song:
             song_name = song.track_name
         else:
             song_name = song_title
@@ -129,7 +138,7 @@ class PlaylistAgent(Agent):
             song_data = song.serialize()
 
             # Invia la richiesta POST al server Flask
-            url = 'http://localhost:5002/add_song'
+            url = "http://localhost:5002/add_song"
             response = requests.post(url, json=song_data)
 
             if response.status_code == 401:
@@ -164,7 +173,7 @@ class PlaylistAgent(Agent):
     def view_playlist(self) -> None:
         """Shows the current playlist."""
 
-        url = 'http://localhost:5002/songs_string'
+        url = "http://localhost:5002/songs_string"
 
         # Invia la richiesta GET
         response = requests.get(url)
@@ -177,12 +186,10 @@ class PlaylistAgent(Agent):
 
     def delete_song(self, song_name: str) -> None:
         # URL dell'endpoint
-        url = 'http://localhost:5002/delete_song'
+        url = "http://localhost:5002/delete_song"
 
         # Crea il payload JSON con il nome della canzone
-        delete_data = {
-            "track_name": song_name
-        }
+        delete_data = {"track_name": song_name}
 
         response = requests.delete(url, json=delete_data)
         if response.status_code == 200:
@@ -200,7 +207,7 @@ class PlaylistAgent(Agent):
     def clear_playlist(self) -> None:
         """Deletes the current playlist."""
         # URL dell'endpoint per cancellare tutte le canzoni
-        url = 'http://localhost:5002/clear_playlist'
+        url = "http://localhost:5002/clear_playlist"
 
         # Invia la richiesta DELETE per svuotare la playlist
         response = requests.delete(url)
