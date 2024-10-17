@@ -299,6 +299,71 @@ class PlaylistAgent(Agent):
             )
         self.dialogue_connector.register_agent_utterance(utterance)
 
+    def how_many_songs_on_album(self, album_name: str) -> None:
+        """Finds the number of songs on an album.
+
+        Is used for the question "How many songs does album X contain?".
+
+        Args:
+            album_name: Album name.
+        """
+        # Get the number of songs on the album from the db
+        num_songs = self.dbmanager.number_of_songs_on_album(album_name)
+
+        if num_songs:
+            utterance = AnnotatedUtterance(
+                f"The album {album_name} contains {num_songs} songs.",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+        self.dialogue_connector.register_agent_utterance(utterance)
+
+    def how_long_is_album(self, album_name: str) -> None:
+        """Finds the duration of an album.
+
+        Is used for the question "How long is album X?".
+
+        Args:
+            album_name: Album name.
+        """
+        duration_album = self.dbmanager.duration_of_album(album_name)
+
+        if duration_album:
+            utterance = AnnotatedUtterance(
+                f"The album {album_name} lasts {parsing.helper_convert_seconds_to_minutes(duration_album)} minutes.",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+        self.dialogue_connector.register_agent_utterance(utterance)
+
+    def most_popular_song_by_artist(self, artist_name: str) -> None:
+        """Finds the most popular song by an artist.
+
+        Args:
+            artist_name: Artist name.
+        """
+        most_popular_song = self.dbmanager.most_popular_song_by_artist(artist_name)
+
+        if most_popular_song:
+            utterance = AnnotatedUtterance(
+                f"The most popular song by {artist_name} is {most_popular_song}",
+                participant=DialogueParticipant.AGENT,
+            )
+        else:
+            utterance = AnnotatedUtterance(
+                f"Sorry, I couldn't find any songs by {artist_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+        self.dialogue_connector.register_agent_utterance(utterance)
+
     def receive_utterance(self, utterance: Utterance) -> None:
         """Gets called each time there is a new user utterance.
 
@@ -378,6 +443,42 @@ class PlaylistAgent(Agent):
             # Tell user song does not exist
             response = AnnotatedUtterance(
                 f"Sorry, I couldn't find the album for the song {song_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        if "How many songs does album" in utterance.text:
+            album_name = parsing.extract_num_songs_on_album(utterance.text)
+            if album_name:
+                self.how_many_songs_on_album(album_name)
+                return
+            # Tell user album does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        if "How long is album" in utterance.text:
+            album_name = parsing.extract_album_name_for_duration(utterance.text)
+            if album_name:
+                self.how_long_is_album(album_name)
+                return
+            # Tell user album does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        if "What is the most popular song by" in utterance.text:
+            artist_name = parsing.extract_artist_for_most_popular_song(utterance.text)
+            if artist_name:
+                self.most_popular_song_by_artist(artist_name)
+                return
+            # Tell user artist does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find any songs by {artist_name}",
                 participant=DialogueParticipant.AGENT,
             )
             self.dialogue_connector.register_agent_utterance(response)

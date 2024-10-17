@@ -80,6 +80,81 @@ def extract_song_from_question_for_album(text: str) -> Union[str, None]:
     return None
 
 
+def extract_num_songs_on_album(text: str) -> Union[str, None]:
+    """Extracts the album name from the question about the No. of songs.
+
+    Is used for the question "How many songs does album X contain?".
+
+    Args:
+        text: User utterance.
+
+    Returns:
+        Album name or None if not found.
+    """
+    # Regular expression pattern to match "How many songs does album X contain?"
+    pattern = r"How many songs does album (.+?) contain\?"
+
+    # Perform the regex search
+    match = re.search(pattern, text)
+
+    if match:
+        # Extract the album name (X)
+        album_name = match.group(1)
+        return album_name
+
+    return None
+
+
+def extract_album_name_for_duration(text: str) -> Union[str, None]:
+    """Extracts the album name from the question about duration of an album.
+
+    Is used for the question "How long is album X?".
+
+    Args:
+        text: User utterance.
+
+    Returns:
+        Album name or None if not found.
+    """
+    # Regular expression pattern to match "How long is album X?"
+    pattern = r"How long is album (.+?)\?"
+
+    # Perform the regex search
+    match = re.search(pattern, text)
+
+    if match:
+        # Extract the album name (X)
+        album_name = match.group(1)
+        return album_name
+
+    return None
+
+
+def extract_artist_for_most_popular_song(text: str) -> Union[str, None]:
+    """Extracts the artist name from the question about the most popular song.
+
+    Is used for the question "What is the most popular song by artist X?".
+
+    Args:
+        text: User utterance.
+
+    Returns:
+        Artist name or None if not found.
+    """
+    # Regular expression pattern to match "What is the most popular song by artist X?"
+    pattern = r"What is the most popular song by artist (.+?)\?"
+
+    # Perform the regex search
+    match = re.search(pattern, text)
+
+    if match:
+        # Extract the artist name (X)
+        artist_name = match.group(1)
+        return artist_name
+
+    return None
+
+
 def helper_parse_release_date(date_str: str) -> Tuple[str, str]:
     """Parses the release date.
 
@@ -98,3 +173,18 @@ def helper_parse_release_date(date_str: str) -> Tuple[str, str]:
     date_obj = datetime.datetime.strptime(date_str, date_format)
 
     return date_obj.strftime("%B"), date_obj.year
+
+
+def helper_convert_seconds_to_minutes(seconds: float) -> float:
+    """Converts seconds to minutes.
+
+    Is used for the song duration.
+
+    Args:
+        seconds: Duration in seconds.
+
+    Returns:
+        float: Duration in minutes.
+    """
+    # Round to the second decimal place
+    return round(seconds / 60, 2)
