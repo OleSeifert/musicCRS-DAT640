@@ -14,7 +14,7 @@ def extract_album_from_question(text: str) -> Union[str, None]:
         text: User utterance.
 
     Returns:
-        Union[str, None]: Album name or None if not found.
+        Album name or None if not found.
     """
     # Regular expression pattern to match "When was album X released?"
     pattern = r"When was album (.+?) released\?"
@@ -39,7 +39,7 @@ def extract_artist_from_question(text: str) -> Union[str, None]:
         text: User utterance.
 
     Returns:
-        Union[str, None]: Artist name or None if not found.
+        Artist name or None if not found.
     """
     # Regex pattern to match "How many albums has artist Y released?"
     pattern = r"How many albums has artist (.+?) released\?"
@@ -64,7 +64,7 @@ def extract_song_from_question_for_album(text: str) -> Union[str, None]:
         text: User utterance.
 
     Returns:
-        Union[str, None]: Song name or None if not found.
+        Song name or None if not found.
     """
     # Regular expression pattern to match "Which album features song X?"
     pattern = r"Which album features song (.+?)\?"
@@ -155,7 +155,7 @@ def extract_artist_for_most_popular_song(text: str) -> Union[str, None]:
     return None
 
 
-def helper_parse_release_date(date_str: str) -> Tuple[str, str]:
+def helper_parse_release_date(date_str: str) -> Tuple[str, int]:
     """Parses the release date.
 
     Date is stored as a string in the database. This function should be used to
@@ -165,7 +165,7 @@ def helper_parse_release_date(date_str: str) -> Tuple[str, str]:
         date: Release date.
 
     Returns:
-        Tuple[str, str]: Month and year of the release date.
+        A tuple (month, year) of the release date.
     """
     date_format = "%Y-%m-%d %H:%M:%S %Z"
 
@@ -184,7 +184,7 @@ def helper_convert_seconds_to_minutes(seconds: float) -> float:
         seconds: Duration in seconds.
 
     Returns:
-        float: Duration in minutes.
+        Duration in minutes.
     """
     # Round to the second decimal place
     return round(seconds / 60, 2)
