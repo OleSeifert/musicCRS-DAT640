@@ -8,8 +8,6 @@ To run execute the following command:
 `python app.py`
 """
 
-import os
-
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
@@ -19,6 +17,7 @@ from models.song import Song
 app = Flask(__name__)
 CORS(app)
 
+# Populate playlist initially with some songs
 playlist = Playlist("My Playlist")
 playlist.add_song(Song(track_name="I Won't Give Up", artist_0="Jason Mraz"))
 playlist.add_song(Song(track_name="93 Million Miles", artist_0="Jason Mraz"))
@@ -27,7 +26,7 @@ playlist.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
 
 @app.route("/songs", methods=["GET"])
 def get_songs():
-    """Restituisce la playlist come stringhe, una per ogni canzone."""
+    """Returns the playlist as strings, one for each song."""
     # Usa il metodo __str__ per ogni oggetto Song
     playlist_strings = [str(song) for song in playlist.songs]
     return jsonify(playlist_strings)
@@ -35,7 +34,7 @@ def get_songs():
 
 @app.route("/add_song", methods=["POST"])
 def add_song():
-    """Aggiunge una nuova canzone alla playlist."""
+    """Adds a new song to the playlist."""
     data = request.get_json()
 
     # Estraiamo tutti i campi dalla richiesta JSON
@@ -114,7 +113,7 @@ def add_song():
 
 @app.route("/delete_song", methods=["DELETE"])
 def delete_song():
-    """Cancella una canzone dalla playlist per nome della traccia."""
+    """Delete a song from the playlist by track name."""
     data = request.get_json()
     track_name = data.get("track_name")
 
@@ -136,7 +135,7 @@ def delete_song():
 
 @app.route("/songs_string", methods=["GET"])
 def get_songs_as_string():
-    """Restituisce tutte le canzoni in una singola stringa, separate da un delimitatore."""
+    """Returns all songs in a single string, separated by a delimiter."""
     # Usa il metodo __str__ per ogni oggetto Song e uniscile in una singola stringa
     songs_string = " // ".join([str(song) for song in playlist.songs])
     return songs_string, 200
@@ -144,7 +143,7 @@ def get_songs_as_string():
 
 @app.route("/clear_playlist", methods=["DELETE"])
 def clear_playlist():
-    """Cancella tutte le canzoni dalla playlist."""
+    """Delete all songs from the playlist."""
     playlist.clear()  # Pulisce la lista delle canzoni
     return jsonify({"message": "All songs have been removed from the playlist"}), 200
 

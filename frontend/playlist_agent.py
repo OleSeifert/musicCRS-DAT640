@@ -3,6 +3,7 @@
 import os
 import random
 import sqlite3
+from typing import List, Tuple, Union
 
 import requests
 from dialoguekit.core.annotated_utterance import AnnotatedUtterance
@@ -64,57 +65,76 @@ class PlaylistAgent(Agent):
             "Q6": "Did you know you can ask me the most popular song by an artist by typing 'What is the most popular song by artist Y?'?",
         }
 
-    def find_song_in_db(self, song_title, artist=None):
-        """Find a song in the database."""
-        conn = connect_db()
-        cursor = conn.cursor()
+    # def find_song_in_db(self, song_title: str, artist: str = None):
+    #     """Find a song in the database.
 
-        if artist:
-            cursor.execute(
-                "SELECT * FROM music WHERE track_name=? AND artists LIKE ?",
-                (song_title, f"%{artist}%"),
-            )
-        else:
-            cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
+    #     Args:
+    #         song_title: Song title.
+    #         artist: Artist name.
 
-        result = cursor.fetchall()  # Prende tutte le occorrenze
+    #     """
+    #     conn = connect_db()
+    #     cursor = conn.cursor()
 
-        conn.close()
+    #     if artist:
+    #         cursor.execute(
+    #             "SELECT * FROM music WHERE track_name=? AND artists LIKE ?",
+    #             (song_title, f"%{artist}%"),
+    #         )
+    #     else:
+    #         cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
 
-        if result:
-            return result[0], len(result)  # Per ora prendiamo solo la prima
-        else:
-            return None, None
+    #     result = cursor.fetchall()  # Prende tutte le occorrenze
 
-    def parse_command(self, command):
-        """Parse il comando e separa artista e titolo, utilizzando i separatori ' : ' e ' by '."""
+    #     conn.close()
+
+    #     if result:
+    #         return result[0], len(result)  # Per ora prendiamo solo la prima
+    #     else:
+    #         return None, None
+
+    def parse_command(
+        self, command: str
+    ) -> Union[Tuple[str, str], Tuple[str, None], Tuple[None, None]]:
+        """Parse the command and separate artist and title.
+
+        It uses the separators ' : ' and ' by '.
+
+        Args:
+            command: User command.
+
+        Returns:
+            Tuple containing the song title and artist. If the artist is not
+              found it will return None. If the song title is not found it will
+              return None, None.
+        """
         command = command.strip()
 
-        # Cerca l'ultimo separatore ' by ' o ' : '
+        # Find the last separator ' by ' or ' : '
         by_pos = command.lower().rfind(" by ")
         colon_pos = command.rfind(" : ")
 
         if by_pos == -1 and colon_pos == -1:
-            # Se non ci sono separatori, considera solo il titolo della canzone
+            # If there are no separators, consider only the song title
             return command, None
 
-        # Usa il separatore che appare per ultimo
+        # Use the separator that appears last
         if by_pos > colon_pos:
             separator_pos = by_pos
-            separator_len = 4  # Lunghezza di " by "
+            separator_len = 4  # Length of " by "
             artist_first = False
         else:
             separator_pos = colon_pos
-            separator_len = 3  # Lunghezza di " : "
+            separator_len = 3  # Length of " : "
             artist_first = True
 
-        # Dividi la stringa in base al separatore trovato
+        # Split the string based on the found separator
         if artist_first:
-            # Se 'artista : titolo'
+            # If 'artist : title'
             artist = command[:separator_pos].strip()
             song_title = command[separator_pos + separator_len :].strip()
         else:
-            # Se 'titolo by artista'
+            # If 'title by artist'
             song_title = command[:separator_pos].strip()
             artist = command[separator_pos + separator_len :].strip()
 
@@ -143,19 +163,24 @@ class PlaylistAgent(Agent):
         )
         self._dialogue_connector.register_agent_utterance(utterance)
 
-    def separate_utterance(self, text: str) -> list[str]:
+    def separate_utterance(self, text: str) -> List[str]:
         """Separates the utterance into command and argument.
 
         Args:
             text: User utterance.
 
         Returns:
-            List containing the command and argument.
+            List: Containing the command and argument.
         """
         return text.split(" ", maxsplit=1)
 
-    def suggest_command_not_utilized(self):
-        """TODO"""
+    def suggest_command_not_utilized(self) -> None:
+        """Suggests a command that has not been utilized yet.
+
+        This function is called every 5th time a command is utilized. It will
+        randomly select a non utilized command. This command is then not
+        suggested to the user again.
+        """
         if self.counter % 5 == 0:
             # Send a suggestion
 
@@ -166,8 +191,13 @@ class PlaylistAgent(Agent):
             )
             self._dialogue_connector.register_agent_utterance(suggestion)
 
-    def add_song(self, command) -> None:
-        # Estrai il titolo e l'artista dal comando usando la funzione parse_command
+    def add_song(self, command: str) -> None:
+        """Adds a song to the playlist.
+
+        Args:
+            command: User command.
+        """
+        # Extract the title and artist from the command using the parse_command function
         song_title, artist = self.parse_command(command)
 
         song, equal_songs = self.dbmanager.find_song_by_title_and_artist(
@@ -181,7 +211,7 @@ class PlaylistAgent(Agent):
         if song:
             song_data = song.serialize()
 
-            # Invia la richiesta POST al server Flask
+            # Send POST request to Flask server
             url = "http://localhost:5002/add_song"
             response = requests.post(url, json=song_data)
 
@@ -219,7 +249,7 @@ class PlaylistAgent(Agent):
 
         url = "http://localhost:5002/songs_string"
 
-        # Invia la richiesta GET
+        # Send GET request
         response = requests.get(url)
 
         utterance = AnnotatedUtterance(
@@ -229,10 +259,15 @@ class PlaylistAgent(Agent):
         self._dialogue_connector.register_agent_utterance(utterance)
 
     def delete_song(self, song_name: str) -> None:
-        # URL dell'endpoint
+        """Deletes a song from the playlist.
+
+        Args:
+            song_name: Name of the song to delete.
+        """
+        # Endpoint URL
         url = "http://localhost:5002/delete_song"
 
-        # Crea il payload JSON con il nome della canzone
+        # Create JSON payload with song name
         delete_data = {"track_name": song_name}
 
         response = requests.delete(url, json=delete_data)
@@ -250,10 +285,10 @@ class PlaylistAgent(Agent):
 
     def clear_playlist(self) -> None:
         """Deletes the current playlist."""
-        # URL dell'endpoint per cancellare tutte le canzoni
+        # Endpoint URL to delete all songs
         url = "http://localhost:5002/clear_playlist"
 
-        # Invia la richiesta DELETE per svuotare la playlist
+        # Send DELETE request to clear playlist
         response = requests.delete(url)
 
         if response.status_code == 200:

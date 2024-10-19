@@ -1,6 +1,5 @@
 """Contains the DatabaseManager class."""
 
-import datetime
 import os
 import sqlite3
 from typing import Tuple, Union
@@ -24,8 +23,8 @@ class DatabaseManager:
         self.db_path = os.path.abspath(db_path)
 
     def find_song_by_title_and_artist(
-        self, song_title: str, artist: str = None
-    ) -> Union[Song, None]:
+        self, song_title: str, artist: Union[str, None] = None
+    ) -> Union[Tuple[Song, int], Tuple[None, None]]:
         """Finds a song in the database by title and artist.
 
         Artist is optional. Returns the first song found. If the song is not
@@ -36,7 +35,7 @@ class DatabaseManager:
             artist: Artist.
 
         Returns:
-            Union[Song, None]: Song object or None if not found.
+            Song and the total number of results or None, None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -64,7 +63,7 @@ class DatabaseManager:
 
         except sqlite3.Error as e:
             print(f"Error: {e}")
-            return None
+            return None, None
 
         finally:  # Tear down
             cursor.close()
@@ -129,7 +128,7 @@ class DatabaseManager:
         else:
             return None, None
 
-    def find_album_release_date(self, album_name: str) -> Union[datetime.date, None]:
+    def find_album_release_date(self, album_name: str) -> Union[str, None]:
         """Fetches the release date of an album.
 
         If the album is not found, returns None.
@@ -138,8 +137,7 @@ class DatabaseManager:
             album_name: Album name.
 
         Returns:
-            Union[datetime.date, None]: Release date of the album or None if not
-              found.
+            Release date of the album as a string or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -176,8 +174,7 @@ class DatabaseManager:
             artist_name: Artist name.
 
         Returns:
-            Union[int, None]: Number of albums by the artist or None if not
-              found.
+            Number of albums by the artist or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -212,7 +209,7 @@ class DatabaseManager:
             album_name: Album name.
 
         Returns:
-            Union[int, None]: Number of songs on the album or None if not found.
+            Number of songs on the album or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -250,7 +247,7 @@ class DatabaseManager:
             album_name: Album name.
 
         Returns:
-            Union[float, None]: Duration of the album or None if not found.
+            Duration of the album or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -294,7 +291,7 @@ class DatabaseManager:
             artist_name: Artist name.
 
         Returns:
-            Union[str, None]: Most popular song by the artist or None if not found.
+            Most popular song by the artist or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -337,7 +334,7 @@ class DatabaseManager:
             album_name: Album name.
 
         Returns:
-            Union[str, None]: Album ID or None if not found.
+            Album ID or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -372,7 +369,7 @@ class DatabaseManager:
             artist_name: Artist name.
 
         Returns:
-            Union[str, None]: Artist ID or None if not found.
+            Artist ID or None if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -412,7 +409,7 @@ class DatabaseManager:
 
         Returns:
             The tuple of album name and artist name or the tuple of None, None
-              if not found.
+            if not found.
 
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
@@ -431,7 +428,7 @@ class DatabaseManager:
 
         except sqlite3.Error as e:
             print(f"Error: {e}")
-            return None
+            return None, None
 
         finally:  # Tear down
             cursor.close()
