@@ -123,11 +123,13 @@ class PlaylistAgent(Agent):
     def welcome(self) -> None:
         """Sends the agent's welcome message."""
         utterance = AnnotatedUtterance(
-            """Hello, I'm Playlist agent, I can help you with your music playlist.
+            """Hello, I'm a Playlist agent, I can help you with your music playlist.
              \nYou can add a song to the playlist by typing '/add <song_name>'
                \nYou can view the current playlist by typing '/view'
                  \nYou can clear the playlist by typing '/clear'
-                  \nYou can exit the conversation by typing '/exit' """,
+                 \nYou can delete a song from the playlist by typing '/delete <song_name>'
+                  \nYou can exit the conversation by typing '/exit'
+                  \nYou can ask me questions about albums and songs by typing 'When was album X released?', 'How many albums has artist Y released?', 'Which album features song X?', 'How many songs does album X contain?', 'How long is album X?', 'What is the most popular song by artist Y?'""",
             participant=DialogueParticipant.AGENT,
         )
         self._dialogue_connector.register_agent_utterance(utterance)
