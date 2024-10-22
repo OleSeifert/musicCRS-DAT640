@@ -2,10 +2,8 @@
       /* Custom CSS for chat and playlist layout */
       #chatWidgetContainer {
         height: 400px; /* Set a height for the chat */
-        border: 1px solid #ddd; /* Add a border for distinction */
         border-radius: 5px; /* Round the corners */
         padding: 10px; /* Add padding inside the chat */
-        background-color: #f8f9fa; /* Light background color */
       }
 
       .sidebar {

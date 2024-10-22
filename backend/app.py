@@ -37,7 +37,7 @@ def add_song():
     """Adds a new song to the playlist."""
     data = request.get_json()
 
-    # Estraiamo tutti i campi dalla richiesta JSON
+    # Extract song data from the request
     new_song = Song(
         album_id=data.get("album_id"),
         album_name=data.get("album_name"),
@@ -90,7 +90,7 @@ def add_song():
         rn=data.get("rn"),
     )
 
-    # Aggiungiamo la canzone alla playlist
+    # Add the song to the playlist
     result = playlist.add_song(new_song)
     if result == -1:
         return (
@@ -117,11 +117,11 @@ def delete_song():
     data = request.get_json()
     track_name = data.get("track_name")
 
-    # Verifica se track_name è stato fornito
+    # Verify that the track_name is provided
     if not track_name:
         return jsonify({"error": "track_name is required"}), 400
 
-    # Rimuove la canzone dalla playlist
+    # Remove the song from the playlist
     result = playlist.remove_song(track_name)
 
     if result == -1:
@@ -136,7 +136,7 @@ def delete_song():
 @app.route("/songs_string", methods=["GET"])
 def get_songs_as_string():
     """Returns all songs in a single string, separated by a delimiter."""
-    # Usa il metodo __str__ per ogni oggetto Song e uniscile in una singola stringa
+    # Uses the __str__ method for each Song object
     songs_string = " // ".join([str(song) for song in playlist.songs])
     return songs_string, 200
 
@@ -144,7 +144,7 @@ def get_songs_as_string():
 @app.route("/clear_playlist", methods=["DELETE"])
 def clear_playlist():
     """Delete all songs from the playlist."""
-    playlist.clear()  # Pulisce la lista delle canzoni
+    playlist.clear()  # Clear the playlist
     return jsonify({"message": "All songs have been removed from the playlist"}), 200
 
 

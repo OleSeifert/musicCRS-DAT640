@@ -608,7 +608,7 @@ class PlaylistAgent(Agent):
             self.dialogue_connector.register_agent_utterance(response)
 
         response = AnnotatedUtterance(
-            "(Parroting) " + utterance.text,
+            "I don't know this command, please type '/help' to see all the available commands",
             participant=DialogueParticipant.AGENT,
         )
         self._dialogue_connector.register_agent_utterance(response)
