@@ -32,7 +32,7 @@ def remove_after_separator(title):
 
 # Connessione al database SQLite originale
 conn_original = sqlite3.connect('final_database.db')  # Sostituisci con il nome del tuo file .db
-query = "SELECT track_name FROM music"  # Sostituisci con il nome della tua tabella
+query = "SELECT track_id, track_name FROM music"  # Sostituisci con il nome della tua tabella
 
 # Carica i dati in un DataFrame pandas
 df = pd.read_sql_query(query, conn_original)
@@ -40,7 +40,7 @@ df = pd.read_sql_query(query, conn_original)
 data = []
 
 # Itera su ciascun titolo di brano
-for track in df['track_name']:
+for track, id in zip(df['track_name'], df['track_id']):
     if pd.isnull(track):
         continue
     # Applica ciascuna funzione all'intero titolo della canzone
@@ -54,19 +54,24 @@ for track in df['track_name']:
     track_lower_no_parenthesis_no_separator = lower_case(remove_after_separator(remove_parentheses(track)))
 
     # Aggiungi le prime due righe (lowercase e senza punteggiatura)
-    data.append((track, track_lower))
-    data.append((track, track_lower_no_punctuation))
-    data.append((track, track_lowe_no_parentheses))
-    data.append((track, track_lower_no_punctuation_no_parentheses))
-    data.append((track, track_lower_no_punctuation_no_parentheses_no_separator))
-    data.append((track, track_lower_no_separator))
-    data.append((track, track_lower_no_punctuation_no_separator))
-    data.append((track, track_lower_no_parenthesis_no_separator))
+    data.append((id, track, track_lower))
+    data.append((id, track, track_lower_no_punctuation))
+    data.append((id, track, track_lowe_no_parentheses))
+    data.append((id, track, track_lower_no_punctuation_no_parentheses))
+    data.append((id, track, track_lower_no_punctuation_no_parentheses_no_separator))
+    data.append((id, track, track_lower_no_separator))
+    data.append((id, track, track_lower_no_punctuation_no_separator))
+    data.append((id, track, track_lower_no_parenthesis_no_separator))
 
 
 # Crea la tabella nel nuovo database con solo 2 colonne
 conn_original.execute('''
+    DROP TABLE IF EXISTS transformed_tracks
+''')
+
+conn_original.execute('''
     CREATE TABLE IF NOT EXISTS transformed_tracks (
+        track_id TEXT,
         original_track TEXT,
         transformed_track TEXT
     )
@@ -74,8 +79,8 @@ conn_original.execute('''
 
 # Inserisci i dati nella nuova tabella
 conn_original.executemany('''
-    INSERT INTO transformed_tracks (original_track, transformed_track)
-    VALUES (?, ?)
+    INSERT INTO transformed_tracks (track_id, original_track, transformed_track)
+    VALUES (?,?, ?)
 ''', data)
 
 conn_original.commit()  # Salva le modifiche

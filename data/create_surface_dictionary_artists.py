@@ -38,7 +38,7 @@ def remove_the(title):
 
 # Connessione al database SQLite originale
 conn_original = sqlite3.connect('final_database.db')  # Sostituisci con il nome del tuo file .db
-query = "SELECT artist_0 FROM music"  # Sostituisci con il nome della tua tabella
+query = "SELECT artist_id, artist_0 FROM music"  # Sostituisci con il nome della tua tabella
 
 # Carica i dati in un DataFrame pandas
 df = pd.read_sql_query(query, conn_original)
@@ -46,7 +46,7 @@ df = pd.read_sql_query(query, conn_original)
 data = []
 
 # Itera su ciascun titolo di brano
-for artist in df['artist_0']:
+for artist, id in zip(df['artist_0'], df['artist_id']):
     if pd.isnull(artist):
         continue
     # Applica ciascuna funzione all'intero titolo della canzone
@@ -56,15 +56,18 @@ for artist in df['artist_0']:
     track_lower_no_punctuation_no_the = remove_the(lower_case_remove_punctuation(artist))
 
     # Aggiungi le prime due righe (lowercase e senza punteggiatura)
-    data.append((artist, track_lower))
-    data.append((artist, track_lower_no_punctuation))
-    data.append((artist, track_lower_no_the))
-    data.append((artist, track_lower_no_punctuation_no_the))
+    data.append((id, artist, track_lower))
+    data.append((id, artist, track_lower_no_punctuation))
+    data.append((id, artist, track_lower_no_the))
+    data.append((id, artist, track_lower_no_punctuation_no_the))
 
-
+conn_original.execute('''
+    DROP TABLE IF EXISTS transformed_artists
+''')
 # Crea la tabella nel nuovo database con solo 2 colonne
 conn_original.execute('''
     CREATE TABLE IF NOT EXISTS transformed_artists (
+        artist_id TEXT,
         original_artist TEXT,
         transformed_artist TEXT
     )
@@ -72,8 +75,8 @@ conn_original.execute('''
 
 # Inserisci i dati nella nuova tabella
 conn_original.executemany('''
-    INSERT INTO transformed_artists (original_artist, transformed_artist)
-    VALUES (?, ?)
+    INSERT INTO transformed_artists (artist_id, original_artist, transformed_artist)
+    VALUES (?, ?, ?)
 ''', data)
 
 conn_original.commit()  # Salva le modifiche
