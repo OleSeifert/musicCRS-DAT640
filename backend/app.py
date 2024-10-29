@@ -23,6 +23,9 @@ playlist.add_song(Song(track_name="I Won't Give Up", artist_0="Jason Mraz"))
 playlist.add_song(Song(track_name="93 Million Miles", artist_0="Jason Mraz"))
 playlist.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
 
+suggestions = Playlist("Suggestions")
+suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
+suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
 
 @app.route("/songs", methods=["GET"])
 def get_songs():
@@ -30,6 +33,13 @@ def get_songs():
     # Usa il metodo __str__ per ogni oggetto Song
     playlist_strings = [str(song) for song in playlist.songs]
     return jsonify(playlist_strings)
+
+@app.route("/suggestions", methods=["GET"])
+def get_suggestions():
+    """Returns the suggestion as strings, one for each song."""
+    # Usa il metodo __str__ per ogni oggetto Song
+    suggestions_strings = [str(song) for song in suggestions.songs]
+    return jsonify(suggestions_strings)
 
 
 @app.route("/add_song", methods=["POST"])
@@ -147,6 +157,37 @@ def clear_playlist():
     playlist.clear()  # Clear the playlist
     return jsonify({"message": "All songs have been removed from the playlist"}), 200
 
+def parse_song_string(song_str):
+    if " by " not in song_str:
+        return None, []
+    track_name, artists_str = song_str.split(" by ", 1)
+    artists = [artist.strip() for artist in artists_str.split(",")]
+    return track_name.strip(), artists
+
+@app.route('/add_to_playlist', methods=['POST'])
+def add_to_playlist():
+    data = request.get_json()
+    song_str = data.get('song')
+
+    # Decode the song string into track name and artists
+    track_name, artists = parse_song_string(song_str)
+
+    if not track_name or not artists:
+        return jsonify({"error": "Invalid song format"}), 400
+
+    # Trova la canzone nei suggerimenti
+    song = suggestions.find_song(track_name, artists)
+    if song:
+        # Rimuove la canzone dai suggerimenti e la aggiunge alla playlist
+        suggestions.remove_song(track_name, artists)
+        playlist.add_song(song)
+
+        # Svuota i suggerimenti
+        suggestions.songs.clear()
+
+        return jsonify({"message": "Song moved to playlist and suggestions cleared"}), 200
+    else:
+        return jsonify({"error": "Song not found in suggestions"}), 404
 
 if __name__ == "__main__":
     app.run(port=5002)

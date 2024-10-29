@@ -41,24 +41,58 @@ class Playlist:
             print("Error: Only Song objects can be added.")
             return -2
 
-    def remove_song(self, track_name: str) -> int:
+    def remove_song(self, track_name: str, artists: list = None) -> int:
         """Removes a song from the playlist.
 
         Args:
             track_name: The name of the track to remove from the playlist.
+            artists: An optional list of artist names to match when removing.
 
         Returns:
             An integer representing the status of the operation:
             0: The song was successfully removed from the playlist.
             -1: The song was not found in the playlist.
         """
-        # Remove a song from the playlist by searching for it by track name
         for song in self.songs:
+            # Controlla se il nome della traccia coincide
             if song.track_name == track_name:
-                self.songs.remove(song)
-                print(f"Removed '{track_name}' from the playlist.")
-                return 0
+                if artists is None:
+                    # Rimuove la canzone basandosi solo sul nome della traccia se gli artisti non sono specificati
+                    self.songs.remove(song)
+                    print(f"Removed '{track_name}' from the playlist.")
+                    return 0
+                else:
+                    # Controllo opzionale degli artisti se specificati
+                    song_artists = [song.artist_0, song.artist_1, song.artist_2, song.artist_3, song.artist_4]
+                    song_artists = [artist for artist in song_artists if artist]  # Rimuove valori None
+
+                    if song_artists == artists:
+                        # Rimuove la canzone solo se sia il nome della traccia sia gli artisti corrispondono
+                        self.songs.remove(song)
+                        print(f"Removed '{track_name}' by {', '.join(artists)} from the playlist.")
+                        return 0
         return -1
+
+    def find_song(self, track_name: str, artists: list = None) -> Song:
+        """Finds a song in the playlist based on track name and optionally artists.
+
+        Args:
+            track_name: The name of the track to find.
+            artists: An optional list of artist names to match.
+
+        Returns:
+            The Song object if found, otherwise None.
+        """
+        for song in self.songs:
+            # Controlla il nome della traccia
+            if song.track_name == track_name:
+                # Se gli artisti sono specificati, verifica che coincidano
+                song_artists = [song.artist_0, song.artist_1, song.artist_2, song.artist_3, song.artist_4]
+                song_artists = [artist for artist in song_artists if artist]
+
+                if artists is None or song_artists == artists:
+                    return song  # Restituisce l'oggetto Song trovato
+        return None
 
     def __str__(self) -> str:
         """Returns a string representation of the playlist with all songs."""

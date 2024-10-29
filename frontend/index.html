@@ -61,8 +61,15 @@
             </div>
 
       <div class="row">
+
+        <div class="col-md-3 sidebar">
+          <h5>Suggestions</h5>
+          <ul class="list-group" id="suggestionList">
+          <!-- Songs will be dynamically inserted here -->
+          </ul>
+        </div>
         <!-- Chatbot container -->
-        <div class="col-md-8">
+        <div class="col-md-6">
           <div id="chatWidgetContainer"
             data-name="Chatbot"
             data-server-url="http://127.0.0.1:5000"
@@ -72,7 +79,7 @@
         </div>
 
         <!-- Sidebar for the playlist -->
-        <div class="col-md-4 sidebar">
+        <div class="col-md-3 sidebar">
           <h5>Playlist</h5>
           <ul class="list-group" id="songList">
           <!-- Songs will be dynamically inserted here -->
@@ -124,3 +131,61 @@
         fetchSongsAndUpdate();
         setInterval(fetchSongsAndUpdate, 5000);
     </script>
+
+    <script>
+      function fetchSuggestionsAndUpdate() {
+        // Fetch the songs from the server and display them
+        // Fetch songs from the server and display them
+        fetch('http://127.0.0.1:5002/suggestions') // Ensure this matches the Flask server's URL
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+          })
+        .then(suggestions => {
+          const suggestionsList = document.getElementById('suggestionList');
+
+          // Clear current list
+          suggestionsList.innerHTML = '';
+
+          // Add new songs to the list
+          suggestions.forEach(suggestion => {
+            const li = document.createElement('li');
+            li.className = 'list-group-item';
+            li.textContent = suggestion;
+            li.addEventListener('click', () => handleSuggestionClick(suggestion)); // add click event
+            suggestionsList.appendChild(li);
+          });
+        })
+        .catch(error => console.error('Error fetching songs:', error));
+        }
+        // Call the function initially and then every 5 seconds
+        fetchSuggestionsAndUpdate();
+        setInterval(fetchSuggestionsAndUpdate, 5000);
+
+
+        function handleSuggestionClick(suggestion) {
+          // Esegue una richiesta HTTP per aggiungere il suggerimento alla playlist
+          fetch('http://127.0.0.1:5002/add_to_playlist', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ song: suggestion })
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Suggestion added to playlist:', data);
+            fetchSongsAndUpdate(); // Aggiorna la lista delle canzoni dopo aver aggiunto un suggerimento
+            fetchSuggestionsAndUpdate()
+          })
+          .catch(error => console.error('Error adding suggestion to playlist:', error));
+        }
+    </script>
+
