@@ -67,6 +67,8 @@ class DatabaseManager:
         results = self.fetch_transformed_songs_by_artist(song_title, artist)
 
         if results:
+            if len(results) == 1:
+                return [results[0]]
             return [Song(*result) for result in results]
         return None
 
@@ -103,6 +105,8 @@ class DatabaseManager:
             connection.close()
 
         if results:
+            if len(results) == 1:
+                return [Song(results[0])]
             return [Song(*result) for result in results]
 
         # If the song is not found, try the alternative spellings
