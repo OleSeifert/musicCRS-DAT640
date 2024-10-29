@@ -201,7 +201,10 @@ def add_suggestions():
                     "message": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} added to suggestions"
                 }
             )
-
+    suggestions.songs.sort(
+        key=lambda song: song.track_popularity if song.track_popularity is not None else 0,
+        reverse=True
+    )
     return jsonify(results), 201
 
 
