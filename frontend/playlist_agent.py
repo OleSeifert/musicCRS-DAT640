@@ -200,49 +200,65 @@ class PlaylistAgent(Agent):
         # Extract the title and artist from the command using the parse_command function
         song_title, artist = self.parse_command(command)
 
-        song, equal_songs = self.dbmanager.find_song_by_title_and_artist(
-            song_title, artist
-        )
-        if song:
-            song_name = song.track_name
+        if song_title:
+            if artist:
+                # Call by song and artist function
+                songs = self.dbmanager.find_song_by_title_and_artist_both_given(
+                    song_title, artist
+                )
+            else:
+                # Call by song function
+                songs = self.dbmanager.find_song_only_by_title(song_title)
         else:
-            song_name = song_title
+            songs = None
 
-        if song:
-            song_data = song.serialize()
+        if songs:  # Song exists
+            if len(songs) < 2:
+                # Add one song to the playlist
+                song_data = songs[0].serialize()
 
-            # Send POST request to Flask server
-            url = "http://localhost:5002/add_song"
-            response = requests.post(url, json=song_data)
+                # Send POST request to Flask server
+                url = "http://localhost:5002/add_song"
+                response = requests.post(url, json=song_data)
 
-            if response.status_code == 401:
+                if response.status_code == 401:
+                    utterance = AnnotatedUtterance(
+                        f"The song {songs[0]} is already in the playlist",
+                        participant=DialogueParticipant.AGENT,
+                    )
+                    self._dialogue_connector.register_agent_utterance(utterance)
+                    return
+                elif response.status_code != 201:
+                    print(f"Error: {response.status_code}")
+                    return
+
                 utterance = AnnotatedUtterance(
-                    f"The song {song} is already in the playlist",
+                    f"The song {songs[0].track_name} is added to the playlist",
                     participant=DialogueParticipant.AGENT,
                 )
                 self._dialogue_connector.register_agent_utterance(utterance)
-                return
-            elif response.status_code != 201:
-                print(f"Error: {response.status_code}")
-                return
+            else:  # Call suggestions
+                # Serialize the songs
+                songs_data = [song.serialize() for song in songs]
 
-            if equal_songs > 1:
+                # Send POST request to Flask server
+                url = "http://localhost:5002/add_suggestions"
+                response = requests.post(url, json=songs_data)
+
+                if response.status_code != 201:
+                    print(f"Error: {response.status_code}")
+                    return
+
                 utterance = AnnotatedUtterance(
-                    f"I found {equal_songs} songs with the name {song_name}, I added my favourite one to the playlist, be more precise if you want one in particular!",
+                    f"I found {len(songs)} songs. Please select one in the suggestions list.",
                     participant=DialogueParticipant.AGENT,
                 )
-            else:
-                utterance = AnnotatedUtterance(
-                    f"The song {song_title} is added to the playlist",
-                    participant=DialogueParticipant.AGENT,
-                )
-            self._dialogue_connector.register_agent_utterance(utterance)
-        else:
+                self._dialogue_connector.register_agent_utterance(utterance)
+        else:  # Song not found
             utterance = AnnotatedUtterance(
-                f"The song {song_name} is not in our Database",
+                f"The song {song_title} is not in our Database",
                 participant=DialogueParticipant.AGENT,
             )
-            self._dialogue_connector.register_agent_utterance(utterance)
 
     def view_playlist(self) -> None:
         """Shows the current playlist."""
