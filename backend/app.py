@@ -121,6 +121,90 @@ def add_song():
     )
 
 
+@app.route("/add_suggestions", methods=["POST"])
+def add_suggestions():
+    """Adds multiple songs to the suggestions list."""
+    data = request.get_json()
+
+    # Verifica che i dati siano una lista di canzoni
+    if not isinstance(data, list):
+        return jsonify({"error": "Invalid data format. Expected a list of songs."}), 400
+
+    # Lista per i risultati dell'aggiunta
+    results = []
+
+    for song_data in data:
+        # Crea un oggetto Song per ogni canzone nella lista
+        new_song = Song(
+            album_id=song_data.get("album_id"),
+            album_name=song_data.get("album_name"),
+            album_popularity=song_data.get("album_popularity"),
+            album_type=song_data.get("album_type"),
+            artists=song_data.get("artists"),
+            artist_0=song_data.get("artist_0"),
+            artist_1=song_data.get("artist_1"),
+            artist_2=song_data.get("artist_2"),
+            artist_3=song_data.get("artist_3"),
+            artist_4=song_data.get("artist_4"),
+            artist_id=song_data.get("artist_id"),
+            duration_sec=song_data.get("duration_sec"),
+            label=song_data.get("label"),
+            release_date=song_data.get("release_date"),
+            total_tracks=song_data.get("total_tracks"),
+            track_id=song_data.get("track_id"),
+            track_name=song_data.get("track_name"),
+            track_number=song_data.get("track_number"),
+            artist_genres=song_data.get("artist_genres"),
+            artist_popularity=song_data.get("artist_popularity"),
+            followers=song_data.get("followers"),
+            name=song_data.get("name"),
+            genre_0=song_data.get("genre_0"),
+            genre_1=song_data.get("genre_1"),
+            genre_2=song_data.get("genre_2"),
+            genre_3=song_data.get("genre_3"),
+            genre_4=song_data.get("genre_4"),
+            acousticness=song_data.get("acousticness"),
+            analysis_url=song_data.get("analysis_url"),
+            danceability=song_data.get("danceability"),
+            duration_ms=song_data.get("duration_ms"),
+            energy=song_data.get("energy"),
+            instrumentalness=song_data.get("instrumentalness"),
+            key=song_data.get("key"),
+            liveness=song_data.get("liveness"),
+            loudness=song_data.get("loudness"),
+            mode=song_data.get("mode"),
+            speechiness=song_data.get("speechiness"),
+            tempo=song_data.get("tempo"),
+            time_signature=song_data.get("time_signature"),
+            track_href=song_data.get("track_href"),
+            track_type=song_data.get("track_type"),
+            uri=song_data.get("uri"),
+            valence=song_data.get("valence"),
+            explicit=song_data.get("explicit"),
+            track_popularity=song_data.get("track_popularity"),
+            release_year=song_data.get("release_year"),
+            release_month=song_data.get("release_month"),
+            rn=song_data.get("rn"),
+        )
+
+        # Aggiunge la canzone ai suggerimenti
+        result = suggestions.add_song(new_song)
+        if result == -1:
+            results.append(
+                {
+                    "error": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} is already in suggestions"
+                }
+            )
+        else:
+            results.append(
+                {
+                    "message": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} added to suggestions"
+                }
+            )
+
+    return jsonify(results), 201
+
+
 @app.route("/delete_song", methods=["DELETE"])
 def delete_song():
     """Delete a song from the playlist by track name."""
