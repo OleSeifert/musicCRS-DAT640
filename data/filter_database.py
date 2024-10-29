@@ -13,7 +13,7 @@ def remove_duplicates():
         WHERE ROWID NOT IN (
             SELECT MIN(ROWID)
             FROM transformed_tracks
-            GROUP BY original_track, transformed_track
+            GROUP BY track_id, original_track, transformed_track
         )
     """
     )
