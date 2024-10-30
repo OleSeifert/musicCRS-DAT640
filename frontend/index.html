@@ -160,7 +160,10 @@
 
           // Se la canzone è già nella playlist, rendila rossa e non cliccabile
           if (disabled) {
-            li.classList.add('disabled-item');
+            li.style.color = 'red';
+            li.style.pointerEvents = 'none'; // Disabilita il clic
+            li.style.backgroundColor = 'lightgray';
+
           } else {
             li.addEventListener('click', () => handleSuggestionClick(message)); // Aggiungi l'evento di clic
           }
