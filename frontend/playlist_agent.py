@@ -259,6 +259,7 @@ class PlaylistAgent(Agent):
                 f"The song {song_title} is not in our Database",
                 participant=DialogueParticipant.AGENT,
             )
+            self._dialogue_connector.register_agent_utterance(utterance)
 
     def view_playlist(self) -> None:
         """Shows the current playlist."""
