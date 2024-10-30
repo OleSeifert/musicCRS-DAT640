@@ -8,9 +8,12 @@ To run execute the following command:
 `python app.py`
 """
 
+import os
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from data import database_manager
 from models.playlist import Playlist
 from models.song import Song
 
@@ -27,12 +30,14 @@ suggestions = Playlist("Suggestions")
 suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
 suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
 
+
 @app.route("/songs", methods=["GET"])
 def get_songs():
     """Returns the playlist as strings, one for each song."""
     # Usa il metodo __str__ per ogni oggetto Song
     playlist_strings = [str(song) for song in playlist.songs]
     return jsonify(playlist_strings)
+
 
 @app.route("/suggestions", methods=["GET"])
 def get_suggestions():
@@ -213,8 +218,10 @@ def add_suggestions():
                 }
             )
     suggestions.songs.sort(
-        key=lambda song: song.track_popularity if song.track_popularity is not None else 0,
-        reverse=True
+        key=lambda song: (
+            song.track_popularity if song.track_popularity is not None else 0
+        ),
+        reverse=True,
     )
     return jsonify(results), 201
 
@@ -233,7 +240,26 @@ def delete_song():
     result = playlist.remove_song(track_name)
 
     if result == -1:
-        return jsonify({"error": "The song is not in the playlist"}), 401
+        # Try an alternate name from the db
+        db_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../data/final_database.db")
+        )
+        db_manager = database_manager.DatabaseManager(db_path)
+
+        # Get the track names from the playlist
+        results_db = db_manager.fetch_transformed_song_name(track_name)
+
+        if results_db is None:
+            return jsonify({"error": "The song is not in the playlist"}), 401
+
+        for song_name in results_db:
+            result = playlist.remove_song(song_name[0])
+
+            if result != -1:
+                break
+
+        if result == -1:  # Still not found
+            return (jsonify({"error": "The song is not in the playlist"}), 401)
 
     return (
         jsonify({"message": f"'{track_name}' has been removed from the playlist"}),
@@ -255,6 +281,7 @@ def clear_playlist():
     playlist.clear()  # Clear the playlist
     return jsonify({"message": "All songs have been removed from the playlist"}), 200
 
+
 def parse_song_string(song_str):
     if " by " not in song_str:
         return None, []
@@ -262,10 +289,11 @@ def parse_song_string(song_str):
     artists = [artist.strip() for artist in artists_str.split(",")]
     return track_name.strip(), artists
 
-@app.route('/add_to_playlist', methods=['POST'])
+
+@app.route("/add_to_playlist", methods=["POST"])
 def add_to_playlist():
     data = request.get_json()
-    song_str = data.get('song')
+    song_str = data.get("song")
 
     # Decode the song string into track name and artists
     track_name, artists = parse_song_string(song_str)
@@ -283,9 +311,13 @@ def add_to_playlist():
         # Svuota i suggerimenti
         suggestions.songs.clear()
 
-        return jsonify({"message": "Song moved to playlist and suggestions cleared"}), 200
+        return (
+            jsonify({"message": "Song moved to playlist and suggestions cleared"}),
+            200,
+        )
     else:
         return jsonify({"error": "Song not found in suggestions"}), 404
+
 
 if __name__ == "__main__":
     app.run(port=5002)

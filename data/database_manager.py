@@ -61,6 +61,8 @@ class DatabaseManager:
             connection.close()
 
         if result:
+            if len(result) == 1:
+                return [result]
             return [Song(*result)]
 
         # If the song is not found, try the alternative spellings
@@ -69,7 +71,7 @@ class DatabaseManager:
         if results:
             if len(results) == 1:
                 return [results[0]]
-            return [Song(*result) for result in results]
+            return results
         return None
 
     def find_song_only_by_title(self, song_title: str) -> Union[List[Song], None]:
@@ -115,175 +117,6 @@ class DatabaseManager:
         if songs:
             return songs
         return None
-
-    def find_song_by_title_and_artist(
-        self, song_title: str, artist: Union[str, None] = None
-    ) -> Union[Tuple[Song, int], Tuple[None, None], List[Song]]:
-        """Finds a song in the database by title and artist.
-
-        Artist is optional. Returns the first song found. If the song is not
-        found, returns None.
-
-        Args:
-            song_title: Song title.
-            artist: Artist name. (Optional)
-
-        Returns:
-            Song and the total number of results or None, None if not found.
-
-        Raises:
-            sqlite3.Error: If an error occurs while querying the database.
-        """
-        # Setup
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-
-        try:
-            if artist:  # Artist is provided
-                cursor.execute(
-                    "SELECT * FROM music WHERE track_name=? AND artist_0 = ?",
-                    (song_title, artist),
-                )
-                results = cursor.fetchall()
-                if not results:
-                    cursor.execute(
-                        "SELECT * FROM music WHERE track_name=? AND artists LIKE ?",
-                        (song_title, f"%{artist}%"),
-                    )
-                    results = cursor.fetchall()
-            else:  # Artist is not provided
-                cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
-                results = cursor.fetchall()
-
-        except sqlite3.Error as e:
-            print(f"Error: {e}")
-            cursor.close()
-            connection.close()
-            return None, None
-
-        if results:
-            total_results = len(results)
-            # Take the first result from the list and create a Song object
-            first_result = results[0]
-            song = Song(*results[0])
-            # song = Song(
-            #     album_id=first_result[0],
-            #     album_name=first_result[1],
-            #     album_popularity=first_result[2],
-            #     album_type=first_result[3],
-            #     artists=first_result[4],
-            #     artist_0=first_result[5],
-            #     artist_1=first_result[6],
-            #     artist_2=first_result[7],
-            #     artist_3=first_result[8],
-            #     artist_4=first_result[9],
-            #     artist_id=first_result[10],
-            #     duration_sec=first_result[11],
-            #     label=first_result[12],
-            #     release_date=first_result[13],
-            #     total_tracks=first_result[14],
-            #     track_id=first_result[15],
-            #     track_name=first_result[16],
-            #     track_number=first_result[17],
-            #     artist_genres=first_result[18],
-            #     artist_popularity=first_result[19],
-            #     followers=first_result[20],
-            #     name=first_result[21],
-            #     genre_0=first_result[22],
-            #     genre_1=first_result[23],
-            #     genre_2=first_result[24],
-            #     genre_3=first_result[25],
-            #     genre_4=first_result[26],
-            #     acousticness=first_result[27],
-            #     analysis_url=first_result[28],
-            #     danceability=first_result[29],
-            #     duration_ms=first_result[30],
-            #     energy=first_result[31],
-            #     instrumentalness=first_result[32],
-            #     key=first_result[33],
-            #     liveness=first_result[34],
-            #     loudness=first_result[35],
-            #     mode=first_result[36],
-            #     speechiness=first_result[37],
-            #     tempo=first_result[38],
-            #     time_signature=first_result[39],
-            #     track_href=first_result[40],
-            #     track_type=first_result[41],
-            #     uri=first_result[42],
-            #     valence=first_result[43],
-            #     explicit=first_result[44],
-            #     track_popularity=first_result[45],
-            #     release_year=first_result[46],
-            #     release_month=first_result[47],
-            #     rn=first_result[48],
-            # )
-            # Tear down
-            cursor.close()
-            connection.close()
-
-            return song, total_results
-        else:
-            # TODO: Handle alternatives
-            song_title = song_title.lower()
-            song_ids = self.fetch_transformed_song_ids(song_title)
-            if not song_ids:  # Song not found
-                # TODO: Fix return type to None if everything is refactored
-                return None, None
-            if artist:
-                # Convert artist and song name to lowercase
-                artist = artist.lower()
-                # Find the artist ids in the surface dictionary
-                artist_id = self.fetch_transformed_artist_id(artist)
-
-                # Try to find the songs by the artist in the database
-                if artist_id:
-                    # Prepare query
-                    query = f"""
-                        SELECT * FROM music WHERE track_id IN
-                        ({','.join(['?'] * len(song_ids))}) AND artist_id=?
-                    """
-                    try:
-                        cursor.execute(query, (*song_ids, artist_id))
-                        results = cursor.fetchall()
-
-                    except sqlite3.Error as e:
-                        print(f"Error: {e}")
-                        return None, None
-
-                    finally:
-                        cursor.close()
-                        connection.close()
-
-                    if results:
-                        # Initialize each row as a Song object and return list
-                        return [Song(*result) for result in results]
-                    # TODO: Fix return type to None if everything is refactored
-                    return None, None
-            else:  # Artist is not given
-                # Initialize query
-                query = f"""
-                    SELECT * FROM music WHERE track_id IN
-                    ({','.join(['?'] * len(song_ids))})
-                """
-
-                try:
-                    cursor.execute(query, (*song_ids,))
-                    results = cursor.fetchall()
-
-                except sqlite3.Error as e:
-                    print(f"Error: {e}")
-                    # TODO: Fix return type to None if everything is refactored
-                    return None, None
-
-                finally:  # Tear down
-                    cursor.close()
-                    connection.close()
-
-                if results:
-                    # Initialize each row as a Song object and return list
-                    return [Song(*result) for result in results]
-                # TODO: Fix return type to None if everything is refactored
-                return None, None
 
     def find_album_release_date(self, album_name: str) -> Union[str, None]:
         """Fetches the release date of an album.
@@ -775,4 +608,43 @@ class DatabaseManager:
 
         if results:
             return [Song(*result) for result in results]
+        return None
+
+    def fetch_transformed_song_name(self, song_name: str) -> Union[List[str], None]:
+        """Fetches the song name for a misspelled name.
+
+        It is used in the delete method of the app.py file to delete a song.
+
+        Args:
+            song_name: Song name.
+
+        Returns:
+            List of transformed song names or None if not found.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        song_name = song_name.lower()
+
+        # Setup
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            cursor.execute(
+                "SELECT original_track FROM transformed_tracks WHERE transformed_track=?",
+                (song_name,),
+            )
+            result = cursor.fetchall()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return None
+
+        finally:
+            cursor.close()
+            connection.close()
+
+        if result:
+            return result
         return None
