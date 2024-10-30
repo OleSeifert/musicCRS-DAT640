@@ -153,7 +153,6 @@ class DatabaseManager:
         if result:
             print(result)
             return result[0]
-        # TODO: Handle alternatives
         return None
 
     def number_of_albums_by_artist(self, artist_name: str) -> Union[int, None]:
@@ -185,13 +184,36 @@ class DatabaseManager:
             print(f"Error: {e}")
             return None
 
-        finally:  # Tear down
+        if result[0] > 0 and result:
             cursor.close()
             connection.close()
-
-        if result:
             return result[0]
-        # TODO: Handle alternatives
+        # Try with alternative spellings
+        artist_id = self.fetch_transformed_artist_id(artist_name)
+
+        if artist_id:  # Fetch the number of albums
+            connection = sqlite3.connect(self.db_path)
+            cursor = connection.cursor()
+
+            try:
+                cursor.execute(
+                    "SELECT COUNT(DISTINCT album_id) FROM music WHERE artist_id=?",
+                    (artist_id,),
+                )
+                result = cursor.fetchone()
+
+            except sqlite3.Error as e:
+                print(f"Error: {e}")
+                return None
+
+            finally:  # Tear down
+                cursor.close()
+                connection.close()
+
+            if result:
+                return result[0]
+            return None
+
         return None
 
     def number_of_songs_on_album(self, album_name: str) -> Union[int, None]:
@@ -301,8 +323,14 @@ class DatabaseManager:
                     (artist_id,),
                 )
                 result = cursor.fetchone()
-            else:
-                return None
+            else:  # Try with alternative spelling
+                artist_id = self.fetch_transformed_artist_id(artist_name)
+                if artist_id:
+                    cursor.execute(
+                        "SELECT track_name FROM music WHERE artist_id=? ORDER BY track_popularity DESC",
+                        (artist_id,),
+                    )
+                    result = cursor.fetchone()
 
         except sqlite3.Error as e:
             print(f"Error: {e}")
@@ -312,9 +340,8 @@ class DatabaseManager:
             cursor.close()
             connection.close()
 
-        if result:
+        if result:  # Will never not set
             return result[0]
-        # TODO: Handle alternatives
         return None
 
     def get_id_for_album(self, album_name: str) -> Union[str, None]:
@@ -386,7 +413,6 @@ class DatabaseManager:
 
         if result:
             return result[0]
-        # TODO: Handle alternatives
         return None
 
     def album_for_song(
@@ -418,17 +444,29 @@ class DatabaseManager:
             )
             result = cursor.fetchone()
 
+            if result:
+                return result[0], result[1]
+
+            # Try alternative spelling
+            song_names = self.fetch_transformed_song_name(song_title)
+
+            if song_names:
+                cursor.execute(
+                    "SELECT album_name, artist_0 FROM music WHERE track_name=?",
+                    (song_names[0][0],),
+                )
+                result = cursor.fetchone()
+                if result:
+                    return result[0], result[1]
+
         except sqlite3.Error as e:
             print(f"Error: {e}")
             return None, None
 
-        finally:  # Tear down
+        finally:
             cursor.close()
             connection.close()
 
-        if result:
-            return result[0], result[1]
-        # TODO: Handle alternatives
         return None, None
 
     # ----- Functions for the Surface Dictionaries -----
