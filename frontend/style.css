@@ -27,6 +27,15 @@
           background-color: cornflowerblue;
       }/* Change background on hover */
 
+      .disabled-item:hover {
+          background-color: red; !important; /* Sfondo rosso quando è in hover */
+          color: black; !important; /* Testo nero quando è in hover */
+      }
+      .disabled-item{
+          color: red; !important;
+          pointer-events: none; !important;
+      }
+
 
       #chatWidgetContainer .quick-reply {
           background-color: #87ceeb !important;

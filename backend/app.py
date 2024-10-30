@@ -36,11 +36,21 @@ def get_songs():
 
 @app.route("/suggestions", methods=["GET"])
 def get_suggestions():
-    """Returns the suggestion as strings, one for each song."""
-    # Usa il metodo __str__ per ogni oggetto Song
-    suggestions_strings = [str(song) for song in suggestions.songs]
-    return jsonify(suggestions_strings)
+    """Returns the suggestions as strings with an indication if they are in the playlist."""
 
+    # Set di track_id della playlist per confronto rapido
+    playlist_track_ids = {song.track_id for song in playlist.songs}
+
+    # Prepara l'elenco delle suggestions con il campo 'disabled' per le canzoni già presenti in playlist
+    suggestions_data = []
+    for song in suggestions.songs:
+        suggestion_entry = {
+            "message": str(song),  # Usa __str__ per ottenere la descrizione della canzone
+            "disabled": song.track_id in playlist_track_ids  # Indica se la canzone è già nella playlist
+        }
+        suggestions_data.append(suggestion_entry)
+
+    return jsonify(suggestions_data), 200
 
 @app.route("/add_song", methods=["POST"])
 def add_song():
@@ -132,6 +142,7 @@ def add_suggestions():
 
     # Lista per i risultati dell'aggiunta
     results = []
+    suggestions.clear() #clear suggestions
 
     for song_data in data:
         # Crea un oggetto Song per ogni canzone nella lista

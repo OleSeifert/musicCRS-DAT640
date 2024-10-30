@@ -149,12 +149,21 @@
           // Clear current list
           suggestionsList.innerHTML = '';
 
+          // Limit to the first 15 suggestions
+          const limitedSuggestions = suggestions.slice(0, 15);
+
           // Add new songs to the list
-          suggestions.forEach(suggestion => {
-            const li = document.createElement('li');
-            li.className = 'list-group-item';
-            li.textContent = suggestion;
-            li.addEventListener('click', () => handleSuggestionClick(suggestion)); // add click event
+          limitedSuggestions.forEach(({ message, disabled }) => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = message;
+
+          // Se la canzone è già nella playlist, rendila rossa e non cliccabile
+          if (disabled) {
+            li.classList.add('disabled-item');
+          } else {
+            li.addEventListener('click', () => handleSuggestionClick(message)); // Aggiungi l'evento di clic
+          }
             suggestionsList.appendChild(li);
           });
         })
