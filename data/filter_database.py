@@ -7,16 +7,18 @@ def remove_duplicates():
     cursor = conn.cursor()
 
     # Execute the query to delete duplicates
-    cursor.execute(
-        """
-        DELETE FROM transformed_tracks
-        WHERE ROWID NOT IN (
-            SELECT MIN(ROWID)
-            FROM transformed_tracks
-            GROUP BY track_id, original_track, transformed_track
-        )
-    """
-    )
+    cursor.execute("""
+            DELETE FROM transformed_tracks
+            WHERE ROWID IN (
+                SELECT ROWID
+                FROM (
+                    SELECT ROWID,
+                           ROW_NUMBER() OVER (PARTITION BY track_id, original_track, transformed_track ORDER BY ROWID) AS rn
+                    FROM transformed_tracks
+                ) t
+                WHERE t.rn > 1
+            )
+        """)
 
     # Commit the changes and close the connection
     conn.commit()
