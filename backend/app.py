@@ -43,15 +43,13 @@ def get_songs():
 def get_suggestions():
     """Returns the suggestions as strings with an indication if they are in the playlist."""
 
-    # Set di track_id della playlist per confronto rapido
     playlist_track_ids = {song.track_id for song in playlist.songs}
 
-    # Prepara l'elenco delle suggestions con il campo 'disabled' per le canzoni già presenti in playlist
     suggestions_data = []
     for song in suggestions.songs:
         suggestion_entry = {
-            "message": str(song),  # Usa __str__ per ottenere la descrizione della canzone
-            "disabled": song.track_id in playlist_track_ids  # Indica se la canzone è già nella playlist
+            "message": str(song),
+            "disabled": song.track_id in playlist_track_ids  # Disable the button if the song is in the playlist
         }
         suggestions_data.append(suggestion_entry)
 
@@ -141,16 +139,13 @@ def add_suggestions():
     """Adds multiple songs to the suggestions list."""
     data = request.get_json()
 
-    # Verifica che i dati siano una lista di canzoni
     if not isinstance(data, list):
         return jsonify({"error": "Invalid data format. Expected a list of songs."}), 400
 
-    # Lista per i risultati dell'aggiunta
     results = []
     suggestions.clear() #clear suggestions
 
     for song_data in data:
-        # Crea un oggetto Song per ogni canzone nella lista
         new_song = Song(
             album_id=song_data.get("album_id"),
             album_name=song_data.get("album_name"),
@@ -203,7 +198,6 @@ def add_suggestions():
             rn=song_data.get("rn"),
         )
 
-        # Aggiunge la canzone ai suggerimenti
         result = suggestions.add_song(new_song)
         if result == -1:
             results.append(
@@ -232,21 +226,17 @@ def delete_song():
     data = request.get_json()
     track_name = data.get("track_name")
 
-    # Verify that the track_name is provided
     if not track_name:
         return jsonify({"error": "track_name is required"}), 400
 
-    # Remove the song from the playlist
     result = playlist.remove_song(track_name)
 
     if result == -1:
-        # Try an alternate name from the db
         db_path = os.path.abspath(
             os.path.join(os.path.dirname(__file__), "../data/final_database.db")
         )
         db_manager = database_manager.DatabaseManager(db_path)
 
-        # Get the track names from the playlist
         results_db = db_manager.fetch_transformed_song_name(track_name)
 
         if results_db is None:
@@ -295,20 +285,16 @@ def add_to_playlist():
     data = request.get_json()
     song_str = data.get("song")
 
-    # Decode the song string into track name and artists
     track_name, artists = parse_song_string(song_str)
 
     if not track_name or not artists:
         return jsonify({"error": "Invalid song format"}), 400
 
-    # Trova la canzone nei suggerimenti
     song = suggestions.find_song(track_name, artists)
     if song:
-        # Rimuove la canzone dai suggerimenti e la aggiunge alla playlist
         suggestions.remove_song(track_name, artists)
         playlist.add_song(song)
 
-        # Svuota i suggerimenti
         suggestions.songs.clear()
 
         return (

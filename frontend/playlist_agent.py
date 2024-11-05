@@ -13,6 +13,8 @@ from dialoguekit.participant.participant import DialogueParticipant
 
 from backend import parsing
 from data.database_manager import DatabaseManager
+from nlu import post_processing
+from nlu import nlu
 
 
 def connect_db():
@@ -191,14 +193,14 @@ class PlaylistAgent(Agent):
             )
             self._dialogue_connector.register_agent_utterance(suggestion)
 
-    def add_song(self, command: str) -> None:
+    def add_song(self, song_title: str, artist: str = None) -> None:
         """Adds a song to the playlist.
 
         Args:
             command: User command.
         """
         # Extract the title and artist from the command using the parse_command function
-        song_title, artist = self.parse_command(command)
+
 
         if song_title:
             if artist:
@@ -483,7 +485,8 @@ class PlaylistAgent(Agent):
                 self._dialogue_connector.register_agent_utterance(utterance)
                 self.suggest_command_not_utilized()
                 return
-            self.add_song(self.separate_utterance(utterance.text)[1])
+            song_title, artist = self.parse_command(self.separate_utterance(utterance.text)[1])
+            self.add_song(song_title, artist)
             self.suggest_command_not_utilized()
             return
 
@@ -613,6 +616,141 @@ class PlaylistAgent(Agent):
             if "Q6" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("Q6")
             artist_name = parsing.extract_artist_for_most_popular_song(utterance.text)
+            if artist_name:
+                self.most_popular_song_by_artist(artist_name)
+                self.suggest_command_not_utilized()
+                return
+            # Tell user artist does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find any songs by {artist_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        #TODO call ollama
+
+        nlu_processor = nlu.NLUProcessor()
+        ollama_response = nlu_processor.process_input(utterance.text)
+        intent = post_processing.extract_intent(ollama_response)
+
+        if intent =='add':
+            self.counter += 1
+            if "add" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("add")
+
+            song_title = post_processing.extract_song(ollama_response)
+            artist = post_processing.extract_artist(ollama_response)
+            if artist == "":
+                artist = None
+            self.add_song(song_title, artist)
+            self.suggest_command_not_utilized()
+            return
+
+        elif intent =='delete':
+            self.counter += 1
+            if "delete" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("delete")
+
+            song_title = post_processing.extract_song(ollama_response)
+            self.delete_song(song_title)
+            self.suggest_command_not_utilized()
+            return
+
+        elif intent=='clear':
+            self.counter += 1
+            if "clear" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("clear")
+            self.clear_playlist()
+            self.suggest_command_not_utilized()
+            return
+
+        elif intent=='Q1':
+            self.counter += 1
+
+            if "Q1" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("Q1")
+            album_name = post_processing.extract_album_name(ollama_response)
+            if album_name:
+                self.find_album_release_date(album_name)
+                self.suggest_command_not_utilized()
+                return
+            # Tell user album does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name} in the database",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+
+        elif intent=='Q2':
+            self.counter += 1
+            if "Q2" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("Q2")
+            artist_name = post_processing.extract_artist(ollama_response)
+            if artist_name:
+                self.find_number_of_albums_by_artist(artist_name)
+                self.suggest_command_not_utilized()
+                return
+            # Tell user artist does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find any albums by {artist_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        elif intent=='Q3':
+            self.counter += 1
+            if "Q3" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("Q3")
+            song_name = post_processing.extract_song(ollama_response)
+            if song_name:
+                self.find_album_for_song(song_name)
+                self.suggest_command_not_utilized()
+                return
+            # Tell user song does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album for the song {song_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        elif intent=='Q4':
+            self.counter += 1
+            if "Q4" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("Q4")
+            album_name = post_processing.extract_album_name(ollama_response)
+            if album_name:
+                self.how_many_songs_on_album(album_name)
+                self.suggest_command_not_utilized()
+                return
+            # Tell user album does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        elif intent=='Q5':
+            self.counter += 1
+            if "Q5" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("Q5")
+            album_name = post_processing.extract_album_name(ollama_response)
+            if album_name:
+                self.how_long_is_album(album_name)
+                self.suggest_command_not_utilized()
+                return
+            # Tell user album does not exist
+            response = AnnotatedUtterance(
+                f"Sorry, I couldn't find the album {album_name}",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
+        elif intent=='Q6':
+            self.counter += 1
+            if "Q6" in self.commands_not_utilized:
+                self.commands_not_utilized.remove("Q6")
+            artist_name = post_processing.extract_artist(ollama_response)
             if artist_name:
                 self.most_popular_song_by_artist(artist_name)
                 self.suggest_command_not_utilized()

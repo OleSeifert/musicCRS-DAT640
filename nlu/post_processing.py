@@ -81,3 +81,62 @@ def post_process_response(response: str) -> Dict[str, Any]:
     cleaned_data = clean_data(json_data)
 
     return cleaned_data
+
+def extract_intent(response: Dict[str, Any]) -> str:
+    """Extracts the intent from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The intent extracted from the response.
+    """
+    return response.get("intent", "")
+
+def extract_album_name(response: Dict[str, Any]) -> str:
+    """Extracts the album name from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The album name extracted from the response.
+    """
+    return response.get("entities", {}).get("album", "")
+
+def extract_artist(response: Dict[str, Any]) -> str:
+    """Extracts the artist name from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The artist name extracted from the response.
+    """
+    return response.get("entities", {}).get("artist", "")
+
+
+def extract_song(response: Dict[str, Any]) -> str:
+    """Extracts the song name from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The song name extracted from the response.
+    """
+    return response.get("entities", {}).get("song", "")
+
+def extract_position(response: Dict[str, Any]) -> str:
+    """Extracts the position from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The position extracted from the response.
+    """
+    return response.get("entities", {}).get("position", "")
+
+
+
