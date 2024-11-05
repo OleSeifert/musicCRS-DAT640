@@ -2,14 +2,17 @@
 
 It has the prompt, which is sent to the model to get the user intent and
 entities.
+
+Under the hood Ollama is used to query a LLAMA 3.2 model and get the response.
 """
 
-from typing import Any
+from typing import Any, Dict, Union
 
 import ollama
+import post_processing
 
 
-def get_nlu_response(user_input: str) -> Any:
+def get_nlu_response(user_input: str) -> str:
     """Query the model with the user input and return the result."""
     response = ollama.chat(
         model="llama3.2",
@@ -58,80 +61,80 @@ def get_nlu_response(user_input: str) -> Any:
 
                 The following are examples of user queries, the queries can look different.
                 The output for the query 'Put Bohemian Rhapsody by Queen in my playlist' would be:
-                {
+                {{
                     "intent": "add",
-                    "entities": {
+                    "entities": {{
                         "song": "Bohemian Rhapsody",
                         "artist": "Queen"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'Add Thriller to my playlist' would be:
-                {
+                {{
                     "intent": "add",
-                    "entities": {
+                    "entities": {{
                         "song": "Thriller"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'remove Bohemian Rhapsody from my playlist' would be:
-                {
+                {{
                     "intent": "delete",
-                    "entities": {
+                    "entities": {{
                         "song": "Bohemian Rhapsody"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'Delete the second song from the playlist' would be:
-                {
+                {{
                     "intent": "delete",
-                    "entities": {
+                    "entities": {{
                         "position": 1
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'delete the playlist' woud be:
-                {
+                {{
                     "intent": "clear"
-                }
+                }}
                 The output for the query 'When was 1989 released?' would be:
-                {
+                {{
                     "intent": "Q1",
-                    "entities": {
+                    "entities": {{
                         "album": "1989"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'How many albums does Taylor Swift have?' would be:
-                {
+                {{
                     "intent": "Q2",
-                    "entities": {
+                    "entities": {{
                         "artist": "Taylor Swift"
-                    }
-                }
+                    }}
+                }}
                 The ouptut for the query 'Which album features Shake it Off?' would be:
-                {
+                {{
                     "intent": "Q3",
-                    "entities": {
+                    "entities": {{
                         "song": "Shake it Off"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'How many songs are on Abbey Road?' would be:
-                {
+                {{
                     "intent": "Q4",
-                    "entities": {
+                    "entities": {{
                         "album": "Abbey Road"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'How long does it take to listen to Thriller?' would be:
-                {
+                {{
                     "intent": "Q5",
-                    "entities": {
+                    "entities": {{
                         "album": "Thriller"
-                    }
-                }
+                    }}
+                }}
                 The output for the query 'What is Michael Jackson most famous for?' would be:
-                {
+                {{
                     "intent": "Q6",
-                    "entities": {
+                    "entities": {{
                         "artist": "Michael Jackson"
-                    }
-                }
+                    }}
+                }}
                 Do not write anything else, than the JSON output.
 
                 User command: '{user_input}'
@@ -140,3 +143,48 @@ def get_nlu_response(user_input: str) -> Any:
         ],
     )
     return response["message"]["content"]
+
+
+class NLUProcessor:
+    """
+    Class to process the NLU.
+
+    It takes care of the communication with the model and extracts the intent
+    and entities from the response. It is called by the playlist agent to
+    understand the user's command.
+    """
+
+    def __init__(self, model_name: str = "llama3.2") -> None:
+        """Initialize the NLUProcessor with a specific model.
+
+        Args:
+            model_name: The name of the model to use for the NLU.
+        """
+        self.model_name = model_name
+
+    def process_input(self, user_input: str) -> Union[Dict[str, Any], None]:
+        """Process the user input and return the intent and entities.
+
+        It calls the model with the user input and extracts the intent and
+        entities from the response.
+
+        Args:
+            user_input: The user input to process.
+
+        Returns:
+            The intent and entities extracted from the user input.
+        """
+        # Call the model with the user input
+        response = get_nlu_response(user_input)
+
+        # Parse the json response
+        json_data = post_processing.post_process_response(response)
+
+        return json_data
+
+
+if __name__ == "__main__":
+    processor = NLUProcessor()
+    res = processor.process_input("Add Thriller to my playlist")
+    print(res)
+    print(type(res))
