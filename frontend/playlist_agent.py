@@ -13,8 +13,7 @@ from dialoguekit.participant.participant import DialogueParticipant
 
 from backend import parsing
 from data.database_manager import DatabaseManager
-from nlu import post_processing
-from nlu import nlu
+from nlu import nlu, post_processing
 
 
 def connect_db():
@@ -193,14 +192,13 @@ class PlaylistAgent(Agent):
             )
             self._dialogue_connector.register_agent_utterance(suggestion)
 
-    def add_song(self, song_title: str, artist: str = None) -> None:
+    def add_song(self, song_title: str, artist: Union[str, None] = None) -> None:
         """Adds a song to the playlist.
 
         Args:
             command: User command.
         """
         # Extract the title and artist from the command using the parse_command function
-
 
         if song_title:
             if artist:
@@ -485,7 +483,9 @@ class PlaylistAgent(Agent):
                 self._dialogue_connector.register_agent_utterance(utterance)
                 self.suggest_command_not_utilized()
                 return
-            song_title, artist = self.parse_command(self.separate_utterance(utterance.text)[1])
+            song_title, artist = self.parse_command(
+                self.separate_utterance(utterance.text)[1]
+            )
             self.add_song(song_title, artist)
             self.suggest_command_not_utilized()
             return
@@ -627,13 +627,14 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
-        #TODO call ollama
+        # TODO call ollama
 
         nlu_processor = nlu.NLUProcessor()
         ollama_response = nlu_processor.process_input(utterance.text)
+        print(f"Ollama response: {ollama_response}")
         intent = post_processing.extract_intent(ollama_response)
 
-        if intent =='add':
+        if intent == "add":
             self.counter += 1
             if "add" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("add")
@@ -646,7 +647,7 @@ class PlaylistAgent(Agent):
             self.suggest_command_not_utilized()
             return
 
-        elif intent =='delete':
+        elif intent == "delete":
             self.counter += 1
             if "delete" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("delete")
@@ -656,7 +657,7 @@ class PlaylistAgent(Agent):
             self.suggest_command_not_utilized()
             return
 
-        elif intent=='clear':
+        elif intent == "clear":
             self.counter += 1
             if "clear" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("clear")
@@ -664,7 +665,7 @@ class PlaylistAgent(Agent):
             self.suggest_command_not_utilized()
             return
 
-        elif intent=='Q1':
+        elif intent == "Q1":
             self.counter += 1
 
             if "Q1" in self.commands_not_utilized:
@@ -681,8 +682,7 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
-
-        elif intent=='Q2':
+        elif intent == "Q2":
             self.counter += 1
             if "Q2" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("Q2")
@@ -698,7 +698,7 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
-        elif intent=='Q3':
+        elif intent == "Q3":
             self.counter += 1
             if "Q3" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("Q3")
@@ -714,7 +714,7 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
-        elif intent=='Q4':
+        elif intent == "Q4":
             self.counter += 1
             if "Q4" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("Q4")
@@ -730,7 +730,7 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
-        elif intent=='Q5':
+        elif intent == "Q5":
             self.counter += 1
             if "Q5" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("Q5")
@@ -746,7 +746,7 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
-        elif intent=='Q6':
+        elif intent == "Q6":
             self.counter += 1
             if "Q6" in self.commands_not_utilized:
                 self.commands_not_utilized.remove("Q6")

@@ -9,7 +9,8 @@ Under the hood Ollama is used to query a LLAMA 3.2 model and get the response.
 from typing import Any, Dict, Union
 
 import ollama
-import post_processing
+
+from . import post_processing
 
 
 def get_nlu_response(user_input: str) -> str:
@@ -20,125 +21,94 @@ def get_nlu_response(user_input: str) -> str:
             {
                 "role": "user",
                 "content": f"""
-                You are an intent detection assistant. Identify the user's intent from the following options:
-                - Add a song to the playlist (intent: "add")
-                - Delete a song from the playlist (intent: "delete")
-                - Clear the playlist (intent: "clear")
-                - Answer questions about songs and albums with these questions:
-                - "When was album X released?" (intent: "Q1")
-                - "How many albums has artist Y released?" (intent: "Q2")
-                - "Which album features song X?" (intent: "Q3")
-                - "How many songs does album X contain?" (intent: "Q4")
-                - "How long is album X?" (intent: "Q5")
-                - "What is the most popular song by artist X?" (intent: "Q6")
+You are an assistant specializing in intent detection. Identify the user's intent and extract all relevant entities, filling in any entities not mentioned with an empty string. Maintain the exact case (uppercase or lowercase) as given by the user.
 
+### Intent Options:
+Choose the appropriate intent based on the user's command:
+- "add": Add a song to the playlist
+- "delete": Delete a song from the playlist
+- "clear": Clear the playlist
+- Questions about songs and albums:
+  - "Q1": When was album X released?
+  - "Q2": How many albums has artist Y released?
+  - "Q3": Which album features song X?
+  - "Q4": How many songs does album X contain?
+  - "Q5": How long is album X?
+  - "Q6": What is the most popular song by artist X?
 
-                For each command, also extract entities if available:
-                - `artist`, `album`, `song`, `position`
-                Please only provide entities that are relevant to the user's intent. E.G.
-                if there is no song mentioned, don't provide a song entity!!
+### Entity Extraction:
+Always provide the following entities in the JSON response, filling in any entities not mentioned with an empty string:
+- `song`: The title of a song, or an empty string if not mentioned
+- `artist`: The name of an artist, or an empty string if not mentioned
+- `album`: The title of an album, or an empty string if not mentioned
+- `position`: Position in the playlist (e.g., "first", "last"), or an empty string if not mentioned
 
-                The position entity is only relevant if the user mentions a specific position ('first', 'third', ...) in the playlist.
-                You have to add that only for the delete intet and for questions about songs.
-                If the 'last song' is mentioned, the position should be 'last'.
-                If a range of positions is described, provide the indices of the first and last song to be deleted.
+### Entity Requirements by Intent:
+Each intent should include only the specified entities, but always return all entities:
+- `add`: Populate `song` and `artist` if provided; otherwise, leave them as empty strings.
+- `delete`: Populate `song` or `position` if specified; otherwise, leave them as empty strings.
+- `clear`: No entities are needed, but all entities should still be included as empty strings.
+- `Q1` to `Q6`: Include only the listed entity, but return all entities as empty strings if they are not mentioned:
+  - `Q1`: `album`
+  - `Q2`: `artist`
+  - `Q3`: `song`
+  - `Q4`: `album`
+  - `Q5`: `album`
+  - `Q6`: `artist`
 
-                Please use indexing starting from 0!
+### Important:
+1. **Case Sensitivity**: Maintain the user’s input case (uppercase or lowercase) in the output.
+2. **Include All Entities**: Always return `song`, `artist`, `album`, and `position` as fields in the JSON response, filling with an empty string if not provided.
+3. **Return JSON Only**: Provide only the JSON output, and do not include any extra text or comments.
 
-                For the following intents provide only the listed entities:
-                - add: song, artist (artist only if provided)
-                - delete: song
-                - clear: no entities needed
-                - Q1: album
-                - Q2: artist
-                - Q3: song
-                - Q4: album
-                - Q5: album
-                - Q6: artist
+### Examples:
+- User: "add bohemian rhapsody by Queen to my playlist"
+  Output:
+  {{
+      "intent": "add",
+      "entities": {{
+          "song": "bohemian rhapsody",
+          "artist": "Queen",
+          "album": "",
+          "position": ""
+      }}
+  }}
+- User: "Add thriller to my playlist"
+  Output:
+  {{
+      "intent": "add",
+      "entities": {{
+          "song": "thriller",
+          "artist": "",
+          "album": "",
+          "position": ""
+      }}
+  }}
+- User: "delete bohemian rhapsody from my playlist"
+  Output:
+  {{
+      "intent": "delete",
+      "entities": {{
+          "song": "bohemian rhapsody",
+          "artist": "",
+          "album": "",
+          "position": ""
+      }}
+  }}
+- User: "When was 1989 released?"
+  Output:
+  {{
+      "intent": "Q1",
+      "entities": {{
+          "song": "",
+          "artist": "",
+          "album": "1989",
+          "position": ""
+      }}
+  }}
 
-                Negative words like 'hate' 'dislike' prompt to delete a song from the playlist.
-
-
-                The following are examples of user queries, the queries can look different.
-                The output for the query 'Put Bohemian Rhapsody by Queen in my playlist' would be:
-                {{
-                    "intent": "add",
-                    "entities": {{
-                        "song": "Bohemian Rhapsody",
-                        "artist": "Queen"
-                    }}
-                }}
-                The output for the query 'Add Thriller to my playlist' would be:
-                {{
-                    "intent": "add",
-                    "entities": {{
-                        "song": "Thriller"
-                    }}
-                }}
-                The output for the query 'remove Bohemian Rhapsody from my playlist' would be:
-                {{
-                    "intent": "delete",
-                    "entities": {{
-                        "song": "Bohemian Rhapsody"
-                    }}
-                }}
-                The output for the query 'Delete the second song from the playlist' would be:
-                {{
-                    "intent": "delete",
-                    "entities": {{
-                        "position": 1
-                    }}
-                }}
-                The output for the query 'delete the playlist' woud be:
-                {{
-                    "intent": "clear"
-                }}
-                The output for the query 'When was 1989 released?' would be:
-                {{
-                    "intent": "Q1",
-                    "entities": {{
-                        "album": "1989"
-                    }}
-                }}
-                The output for the query 'How many albums does Taylor Swift have?' would be:
-                {{
-                    "intent": "Q2",
-                    "entities": {{
-                        "artist": "Taylor Swift"
-                    }}
-                }}
-                The ouptut for the query 'Which album features Shake it Off?' would be:
-                {{
-                    "intent": "Q3",
-                    "entities": {{
-                        "song": "Shake it Off"
-                    }}
-                }}
-                The output for the query 'How many songs are on Abbey Road?' would be:
-                {{
-                    "intent": "Q4",
-                    "entities": {{
-                        "album": "Abbey Road"
-                    }}
-                }}
-                The output for the query 'How long does it take to listen to Thriller?' would be:
-                {{
-                    "intent": "Q5",
-                    "entities": {{
-                        "album": "Thriller"
-                    }}
-                }}
-                The output for the query 'What is Michael Jackson most famous for?' would be:
-                {{
-                    "intent": "Q6",
-                    "entities": {{
-                        "artist": "Michael Jackson"
-                    }}
-                }}
-                Do not write anything else, than the JSON output.
-
-                User command: '{user_input}'
-                """,
+User command: '{user_input}'
+""",
             },
         ],
     )
@@ -183,8 +153,9 @@ class NLUProcessor:
         return json_data
 
 
+# TODO: Remove the following code
 if __name__ == "__main__":
     processor = NLUProcessor()
-    res = processor.process_input("Add Thriller to my playlist")
+    res = processor.process_input("Delte the first two songs from the playlist")
     print(res)
     print(type(res))
