@@ -27,8 +27,8 @@ playlist.add_song(Song(track_name="93 Million Miles", artist_0="Jason Mraz"))
 playlist.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
 
 suggestions = Playlist("Suggestions")
-#suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
-#suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
+# suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
+# suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
 
 
 @app.route("/songs", methods=["GET"])
@@ -49,11 +49,13 @@ def get_suggestions():
     for song in suggestions.songs:
         suggestion_entry = {
             "message": str(song),
-            "disabled": song.track_id in playlist_track_ids  # Disable the button if the song is in the playlist
+            "disabled": song.track_id
+            in playlist_track_ids,  # Disable the button if the song is in the playlist
         }
         suggestions_data.append(suggestion_entry)
 
     return jsonify(suggestions_data), 200
+
 
 @app.route("/add_song", methods=["POST"])
 def add_song():
@@ -143,7 +145,7 @@ def add_suggestions():
         return jsonify({"error": "Invalid data format. Expected a list of songs."}), 400
 
     results = []
-    suggestions.clear() #clear suggestions
+    suggestions.clear()  # clear suggestions
 
     for song_data in data:
         new_song = Song(
@@ -256,8 +258,9 @@ def delete_song():
         200,
     )
 
-@app.route("/delete_songs_by_positions ", methods=["DELETE"])
-def delete_song():
+
+@app.route("/delete_songs_by_positions", methods=["DELETE"])
+def delete_songs():
     """Delete songs from the playlist by positions."""
     data = request.get_json()
     positions = data.get("positions")
@@ -271,9 +274,14 @@ def delete_song():
         return (jsonify({"error": "These positions are not available"}), 401)
 
     return (
-        jsonify({"message": f"Songs in positions:'{positions}' has been removed from the playlist"}),
+        jsonify(
+            {
+                "message": f"Songs in positions:'{positions}' has been removed from the playlist"
+            }
+        ),
         200,
     )
+
 
 @app.route("/songs_string", methods=["GET"])
 def get_songs_as_string():

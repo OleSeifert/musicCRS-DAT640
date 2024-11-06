@@ -119,6 +119,7 @@ Each intent should include only the specified entities, but always return all en
       }}
   }}
 
+REMEMBER TO DO NOT PROVIDE AN ARTIST IF IT'S NOT PROVIDED BY THE USER.
 User command: '{user_input}'
 """,
             },
