@@ -60,6 +60,7 @@ Each intent should include only the specified entities, but always return all en
 1. **Case Sensitivity**: Maintain the user’s input case (uppercase or lowercase) in the output.
 2. **Include All Entities**: Always return `song`, `artist`, `album`, and `position` as fields in the JSON response, filling with an empty string if not provided.
 3. **Return JSON Only**: Provide only the JSON output, and do not include any extra text or comments.
+4. **Position Entity**: The `position` entity is not empty only in a delete intent. It should be an array of integers e.g. [1] if the user wants to delete the second song, or [0,1,2] if the user wants to delete the first three songs.
 
 ### Examples:
 - User: "add bohemian rhapsody by Queen to my playlist"
@@ -93,6 +94,17 @@ Each intent should include only the specified entities, but always return all en
           "artist": "",
           "album": "",
           "position": ""
+      }}
+  }}
+  - User: "delete song number five and two"
+  Output:
+  {{
+      "intent": "delete",
+      "entities": {{
+          "song": "",
+          "artist": "",
+          "album": "",
+          "position": "[4,1]"
       }}
   }}
 - User: "When was 1989 released?"

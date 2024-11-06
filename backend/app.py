@@ -27,8 +27,8 @@ playlist.add_song(Song(track_name="93 Million Miles", artist_0="Jason Mraz"))
 playlist.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
 
 suggestions = Playlist("Suggestions")
-suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
-suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
+#suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
+#suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
 
 
 @app.route("/songs", methods=["GET"])
@@ -256,6 +256,24 @@ def delete_song():
         200,
     )
 
+@app.route("/delete_songs_by_positions ", methods=["DELETE"])
+def delete_song():
+    """Delete songs from the playlist by positions."""
+    data = request.get_json()
+    positions = data.get("positions")
+
+    if not positions:
+        return jsonify({"error": "track_name is required"}), 400
+
+    result = playlist.remove_songs_by_positions(positions)
+
+    if result == -1:
+        return (jsonify({"error": "These positions are not available"}), 401)
+
+    return (
+        jsonify({"message": f"Songs in positions:'{positions}' has been removed from the playlist"}),
+        200,
+    )
 
 @app.route("/songs_string", methods=["GET"])
 def get_songs_as_string():

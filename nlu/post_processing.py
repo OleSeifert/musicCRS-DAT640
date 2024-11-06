@@ -138,5 +138,19 @@ def extract_position(response: Dict[str, Any]) -> str:
     """
     return response.get("entities", {}).get("position", "")
 
+def vector_position(position: str) -> list:
+    """Converts the position string to a list of integers.
+
+    Args:
+        position: The position string to convert.
+
+    Returns:
+        A list of integers representing the position.
+    """
+    if position!= "":
+        return [int(x) for x in position[1:-1].split(",")]
+    return []
+
+
 
 

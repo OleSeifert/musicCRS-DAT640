@@ -73,6 +73,28 @@ class Playlist:
                         return 0
         return -1
 
+    # remove songs by positions
+    def remove_songs_by_positions(self, positions: list) -> int:
+        """Removes songs from the playlist based on their positions.
+
+        Args:
+            positions: A list of integers representing the positions of the songs to remove.
+
+        Returns:
+            An integer representing the status of the operation:
+            0: The songs were successfully removed from the playlist.
+            -1: None of the positions were found in the playlist.
+        """
+
+        if any(pos < 0 or pos >= len(self.songs) for pos in positions):
+            print("Error: Some positions are out of range.")
+            return -1
+
+        for pos in sorted(positions, reverse=True):
+            song = self.songs.pop(pos)
+            print(f"Removed '{song.track_name}' from the playlist.")
+
+        return 0
     def find_song(self, track_name: str, artists: list = None) -> Song:
         """Finds a song in the playlist based on track name and optionally artists.
 

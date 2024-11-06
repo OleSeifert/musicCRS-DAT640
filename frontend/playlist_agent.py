@@ -300,6 +300,32 @@ class PlaylistAgent(Agent):
             )
         self._dialogue_connector.register_agent_utterance(utterance)
 
+    #position is a list of integers
+    def delete_songs_by_position(self, position: list) -> None:
+        """Deletes songs from the playlist.
+
+        Args:
+            position: List of positions of the songs to delete.
+        """
+        # Endpoint URL
+        url = "http://localhost:5002/delete_songs_by_positions"
+
+        # Create JSON payload with song name
+        delete_data = {"positions": position}
+
+        response = requests.delete(url, json=delete_data)
+        if response.status_code == 200:
+            utterance = AnnotatedUtterance(
+                f"The songs have been removed from the playlist",
+                participant=DialogueParticipant.AGENT,
+            )
+        elif response.status_code == 401:
+            utterance = AnnotatedUtterance(
+                f"Please, provide correct positions for the songs that you want to delete.",
+                participant=DialogueParticipant.AGENT,
+            )
+        self._dialogue_connector.register_agent_utterance(utterance)
+
     def clear_playlist(self) -> None:
         """Deletes the current playlist."""
         # Endpoint URL to delete all songs
@@ -653,9 +679,16 @@ class PlaylistAgent(Agent):
                 self.commands_not_utilized.remove("delete")
 
             song_title = post_processing.extract_song(ollama_response)
-            self.delete_song(song_title)
-            self.suggest_command_not_utilized()
-            return
+            position = post_processing.vector_position(post_processing.extract_position(ollama_response))
+
+            if position:
+                self.delete_songs_by_position(position)
+                self.suggest_command_not_utilized()
+                return
+            else:
+                self.delete_song(song_title)
+                self.suggest_command_not_utilized()
+                return
 
         elif intent == "clear":
             self.counter += 1
