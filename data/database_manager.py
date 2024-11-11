@@ -686,3 +686,22 @@ class DatabaseManager:
         if result:
             return result
         return None
+
+    def create_similar_songs_table(self) -> None:
+        """Creates the similar_songs table in the database.
+
+        Checks whether the table exists and creates it if it does not.
+        """
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+        cursor.execute(
+            """
+        CREATE TABLE IF NOT EXISTS similar_songs (
+            track_id TEXT PRIMARY KEY,
+            similar_tracks TEXT
+        )
+        """
+        )
+        connection.commit()
+        cursor.close()
+        connection.close()
