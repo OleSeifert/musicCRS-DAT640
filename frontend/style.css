@@ -1,41 +1,68 @@
 /* styles.css */
-      /* Custom CSS for chat and playlist layout */
-      #chatWidgetContainer {
-        height: 400px; /* Set a height for the chat */
-        border-radius: 5px; /* Round the corners */
-        padding: 10px; /* Add padding inside the chat */
-      }
 
-      .sidebar {
-        position: sticky;
-        top: 20px; /* Keep the sidebar sticky */
-        background-color: #87ceeb; /* Light blue background for the playlist */
-        border-radius: 10px; /* Rounded corners */
-        padding: 15px; /* Add padding inside the sidebar */
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
-      }
-
-      .list-group-item {
-        cursor: pointer; /* Change cursor on hover */
-      }
-
-      .suggestion-list .list-group-item:hover {
-          background-color: springgreen;
-      }/* Change background on hover */
-
-      .playlist-list .list-group-item:hover {
-          background-color: cornflowerblue;
-      }/* Change background on hover */
-
-
-
-      #chatWidgetContainer .quick-reply {
-          background-color: #87ceeb !important;
-          color: black !important;
-          border: 1px solid #ddd;
-          padding: 10px !important;
-          border-radius: 10px !important;
-          margin: 5px !important;
-          cursor: pointer;
+/* Custom CSS for chat and playlist layout */
+#chatWidgetContainer {
+  height: 400px; /* Set a height for the chat */
+  border-radius: 5px; /* Round the corners */
+  padding: 10px; /* Add padding inside the chat */
 }
 
+.sidebar {
+  position: sticky;
+  top: 20px; /* Keep the sidebar sticky */
+  background-color: #87ceeb; /* Light blue background for the playlist */
+  border-radius: 10px; /* Rounded corners */
+  padding: 15px; /* Add padding inside the sidebar */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+  z-index: 1; /* Default z-index for the suggestion sidebar */
+}
+
+#recommendationsSidebar{
+  display: none
+}
+#suggestionsSideBar {
+  display: block; /* Initially hidden */
+}
+/* Hover effects for the list items */
+.suggestion-list .list-group-item:hover {
+  background-color: springgreen;
+}
+
+.playlist-list .list-group-item:hover {
+  background-color: cornflowerblue;
+}
+
+.recommendation-list .list-group-item:hover {
+  background-color: springgreen; /* Assicurati che il verde sia applicato quando selezionato */
+}
+
+/* Styling for the Add to Playlist button */
+#addToPlaylistBtn {
+  background-color: #32cd32; /* Lime green background */
+  color: white; /* White text */
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  width: 100%; /* Make the button full width */
+  cursor: pointer;
+}
+
+#addToPlaylistBtn:hover {
+  background-color: #228b22; /* Dark green on hover */
+}
+
+/* Quick reply buttons inside chat */
+#chatWidgetContainer .quick-reply {
+  background-color: #87ceeb !important;
+  color: black !important;
+  border: 1px solid #ddd;
+  padding: 10px !important;
+  border-radius: 10px !important;
+  margin: 5px !important;
+  cursor: pointer;
+}
+
+.selected {
+  background-color: limegreen !important; /* Colore verde per la selezione */
+  color: white;  /* Imposta il colore del testo su bianco */
+}

@@ -62,12 +62,19 @@
 
       <div class="row">
 
-        <div class="col-md-3 sidebar">
+        <div class="col-md-3 sidebar" id="suggestionsSideBar">
           <h5>Suggestions</h5>
           <ul class="list-group suggestion-list" id="suggestionList">
           <!-- Songs will be dynamically inserted here -->
           </ul>
         </div>
+        <div class="col-md-3 sidebar" id="recommendationsSidebar" >
+          <h5>Recommendations</h5>
+          <ul class="list-group recommendation-list" id="recommendationList">
+          <!-- Recommendations will be dynamically inserted here -->
+          </ul>
+          <button class="btn btn-success mt-2" id="addToPlaylistBtn">Add to Playlist</button>
+          </div>
         <!-- Chatbot container -->
         <div class="col-md-6">
           <div id="chatWidgetContainer"
@@ -172,11 +179,69 @@
         })
         .catch(error => console.error('Error fetching songs:', error));
         }
+
+        let selectedRecommendations = [];
+
+        function fetchRecommendationsAndUpdate() {
+        // Fetch the songs from the server and display them
+        // Fetch songs from the server and display them
+        const previouslySelected = selectedRecommendations.slice();
+
+        fetch('http://127.0.0.1:5002/recommendations') // Ensure this matches the Flask server's URL
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+            }
+            return response.json();
+          })
+        .then(recommendations => {
+          const recommendationsList = document.getElementById('recommendationList');
+
+          // Clear current list
+          recommendationsList.innerHTML = '';
+
+          // Limit to the first 15 suggestions
+          const limitedRecommendations = recommendations.slice(0, 15);
+
+          // Add new songs to the list
+          limitedRecommendations.forEach(({ message, disabled }) => {
+          const li = document.createElement('li');
+          li.className = 'list-group-item';
+          li.textContent = message;
+
+          // Se la canzone è già nella playlist, rendila rossa e non cliccabile
+          if (disabled) {
+            li.style.color = 'red';
+            li.style.pointerEvents = 'none'; // Disabilita il clic
+            li.style.backgroundColor = 'lightgray';
+
+          } else {
+          }
+          recommendationsList.appendChild(li);
+
+          });
+          restoreSelectedItems(recommendationsList, previouslySelected);
+          document.getElementById('recommendationList').addEventListener('click', handleRecommendationClick);
+          toggleListVisibility()
+        })
+        .catch(error => console.error('Error fetching songs:', error));
+        }
+
+
+// Funzione per ripristinare la selezione degli elementi
+function restoreSelectedItems(listElement, previouslySelected) {
+  Array.from(listElement.children).forEach(li => {
+    if (previouslySelected.includes(li.textContent)) {
+      li.style.backgroundColor = 'limegreen'; // Ripristina il colore verde
+    }
+  });
+}
+        // Call the function initially and then every 5 seconds
+        fetchRecommendationsAndUpdate();
+        setInterval(fetchRecommendationsAndUpdate, 5000);
         // Call the function initially and then every 5 seconds
         fetchSuggestionsAndUpdate();
         setInterval(fetchSuggestionsAndUpdate, 5000);
-
-
         function handleSuggestionClick(suggestion) {
           // Esegue una richiesta HTTP per aggiungere il suggerimento alla playlist
           fetch('http://127.0.0.1:5002/add_to_playlist', {
@@ -199,5 +264,75 @@
           })
           .catch(error => console.error('Error adding suggestion to playlist:', error));
         }
-    </script>
 
+
+    // Funzione per gestire il click sugli elementi della recommendation
+    function handleRecommendationClick(event) {
+      const item = event.target;
+      if (item.classList.contains('list-group-item')) {
+        // Controlla se l'elemento è già verde (se è già stato selezionato)
+        if (item.style.backgroundColor === 'limegreen') {
+          // Rimuovi dalla lista degli elementi selezionati
+          item.style.backgroundColor = ''; // Reset del colore
+          selectedRecommendations = selectedRecommendations.filter(song => song !== item.textContent);
+        } else {
+          // Aggiungi alla lista degli elementi selezionati
+          item.style.backgroundColor = 'limegreen'; // Imposta il colore verde
+          selectedRecommendations.push(item.textContent);
+        }
+      }
+    }
+
+    // Funzione per inviare le canzoni selezionate al server
+    function addToPlaylist() {
+      if (selectedRecommendations.length > 0) {
+        fetch('http://127.0.0.1:5002/add_recommendation_to_playlist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ songs: selectedRecommendations })
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Recommendations added to playlist:', data);
+          // Reset after successful addition
+          selectedRecommendations = [];
+          document.querySelectorAll('.list-group-item').forEach(item => {
+            item.style.backgroundColor = ''; // Reset all items to their original state
+          });
+          fetchSongsAndUpdate(); // Aggiorna la lista delle canzoni dopo aver aggiunto le recommendations
+          fetchRecommendationsAndUpdate();
+          toggleListVisibility()
+        })
+        .catch(error => console.error('Error adding recommendations to playlist:', error));
+      } else {
+        alert('No recommendations selected.');
+      }
+    }
+
+    // Aggiungi gli event listeners
+    document.getElementById('recommendationList').addEventListener('click', handleRecommendationClick);
+    document.getElementById('addToPlaylistBtn').addEventListener('click', addToPlaylist);
+
+    function toggleListVisibility() {
+      const recommendationsList = document.getElementById('recommendationList');
+      const suggestions = document.getElementById('suggestionsSideBar');
+      const recommendations = document.getElementById('recommendationsSidebar');
+
+      if (recommendationsList.children.length > 0) {
+        // Se ci sono elementi nelle recommendations, mostra recommendationList e nascondi suggestionList
+        recommendations.style.display = 'block';
+        suggestions.style.display = 'none';
+      } else {
+        // Altrimenti, mostra suggestionList e nascondi recommendationList
+        recommendations.style.display = 'none';
+        suggestions.style.display = 'block';
+      }
+    }
+    </script>

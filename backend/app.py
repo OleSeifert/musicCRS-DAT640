@@ -30,6 +30,9 @@ suggestions = Playlist("Suggestions")
 # suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
 # suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
 
+recommendations = Playlist("Recommendations")
+# recommendations.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
+
 
 @app.route("/songs", methods=["GET"])
 def get_songs():
@@ -55,6 +58,23 @@ def get_suggestions():
         suggestions_data.append(suggestion_entry)
 
     return jsonify(suggestions_data), 200
+
+@app.route("/recommendations", methods=["GET"])
+def get_recommendations():
+    """Returns the recommendations as strings with an indication if they are in the playlist."""
+
+    playlist_track_ids = {song.track_id for song in playlist.songs}
+
+    recommendations_data = []
+    for song in recommendations.songs:
+        recommendation_entry = {
+            "message": str(song),
+            "disabled": song.track_id
+            in playlist_track_ids,  # Disable the button if the song is in the playlist
+        }
+        recommendations_data.append(recommendation_entry)
+
+    return jsonify(recommendations_data), 200
 
 
 @app.route("/add_song", methods=["POST"])
@@ -222,6 +242,92 @@ def add_suggestions():
     return jsonify(results), 201
 
 
+@app.route("/add_recommendations", methods=["POST"])
+def add_recommendations():
+    """Adds multiple songs to the recommendations list."""
+    data = request.get_json()
+
+    if not isinstance(data, list):
+        return jsonify({"error": "Invalid data format. Expected a list of songs."}), 400
+
+    results = []
+    recommendations.clear()  # clear suggestions
+
+    for song_data in data:
+        new_song = Song(
+            album_id=song_data.get("album_id"),
+            album_name=song_data.get("album_name"),
+            album_popularity=song_data.get("album_popularity"),
+            album_type=song_data.get("album_type"),
+            artists=song_data.get("artists"),
+            artist_0=song_data.get("artist_0"),
+            artist_1=song_data.get("artist_1"),
+            artist_2=song_data.get("artist_2"),
+            artist_3=song_data.get("artist_3"),
+            artist_4=song_data.get("artist_4"),
+            artist_id=song_data.get("artist_id"),
+            duration_sec=song_data.get("duration_sec"),
+            label=song_data.get("label"),
+            release_date=song_data.get("release_date"),
+            total_tracks=song_data.get("total_tracks"),
+            track_id=song_data.get("track_id"),
+            track_name=song_data.get("track_name"),
+            track_number=song_data.get("track_number"),
+            artist_genres=song_data.get("artist_genres"),
+            artist_popularity=song_data.get("artist_popularity"),
+            followers=song_data.get("followers"),
+            name=song_data.get("name"),
+            genre_0=song_data.get("genre_0"),
+            genre_1=song_data.get("genre_1"),
+            genre_2=song_data.get("genre_2"),
+            genre_3=song_data.get("genre_3"),
+            genre_4=song_data.get("genre_4"),
+            acousticness=song_data.get("acousticness"),
+            analysis_url=song_data.get("analysis_url"),
+            danceability=song_data.get("danceability"),
+            duration_ms=song_data.get("duration_ms"),
+            energy=song_data.get("energy"),
+            instrumentalness=song_data.get("instrumentalness"),
+            key=song_data.get("key"),
+            liveness=song_data.get("liveness"),
+            loudness=song_data.get("loudness"),
+            mode=song_data.get("mode"),
+            speechiness=song_data.get("speechiness"),
+            tempo=song_data.get("tempo"),
+            time_signature=song_data.get("time_signature"),
+            track_href=song_data.get("track_href"),
+            track_type=song_data.get("track_type"),
+            uri=song_data.get("uri"),
+            valence=song_data.get("valence"),
+            explicit=song_data.get("explicit"),
+            track_popularity=song_data.get("track_popularity"),
+            release_year=song_data.get("release_year"),
+            release_month=song_data.get("release_month"),
+            rn=song_data.get("rn"),
+        )
+
+        result = recommendations.add_song(new_song)
+        if result == -1:
+            results.append(
+                {
+                    "error": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} is already in suggestions"
+                }
+            )
+        else:
+            results.append(
+                {
+                    "message": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} added to suggestions"
+                }
+            )
+    recommendations.songs.sort(
+        key=lambda song: (
+            song.track_popularity if song.track_popularity is not None else 0
+        ),
+        reverse=True,
+    )
+    return jsonify(results), 201
+
+
 @app.route("/delete_song", methods=["DELETE"])
 def delete_song():
     """Delete a song from the playlist by track name."""
@@ -329,6 +435,51 @@ def add_to_playlist():
         )
     else:
         return jsonify({"error": "Song not found in suggestions"}), 404
+
+
+@app.route("/add_recommendation_to_playlist", methods=["POST"])
+def add_recommendation_to_playlist():
+    data = request.get_json()
+    songs_data = data.get("songs")  # Lista di canzoni da aggiungere alla playlist
+
+    if not songs_data:
+        return jsonify({"error": "No songs provided"}), 400
+
+    added_songs = []  # Lista per tracciare le canzoni aggiunte
+    not_found_songs = []  # Lista per tracciare le canzoni non trovate
+
+    for song_str in songs_data:
+        track_name, artists = parse_song_string(song_str)
+
+        if not track_name or not artists:
+            not_found_songs.append(song_str)
+            continue
+
+        # Trova la canzone nelle raccomandazioni
+        song = recommendations.find_song(track_name, artists)
+        if song:
+            recommendations.remove_song(track_name, artists)
+            playlist.add_song(song)
+            added_songs.append(song)
+        else:
+            not_found_songs.append(song_str)
+
+    if added_songs:
+        # Se almeno una canzone è stata aggiunta alla playlist
+        response_message = f"{len(added_songs)} recommendations added to the playlist"
+    else:
+        # Se nessuna canzone è stata trovata o aggiunta
+        response_message = "No valid songs found to add to the playlist"
+
+    recommendations.clear()  # Clear the recommendations
+
+    return jsonify(
+        {
+            "message": response_message,
+            "added_songs": [song.serialize() for song in added_songs],
+            "not_found_songs": not_found_songs,
+        }
+    ), 200
 
 
 if __name__ == "__main__":
