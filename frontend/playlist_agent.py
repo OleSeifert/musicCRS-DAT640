@@ -716,6 +716,19 @@ class PlaylistAgent(Agent):
             self.clear_playlist()
             self.suggest_command_not_utilized()
             return
+        elif intent == "recommend":
+            self.counter += 1
+            requests.get("http://localhost:5002/add_recommendations")
+
+            response = AnnotatedUtterance(
+                """I have displayed the recommendations in the recommendation
+                list. Please select all the songs you like and add them to the
+                playlist.""",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+            self.suggest_command_not_utilized()
+            return
 
         elif intent == "Q1":
             self.counter += 1
