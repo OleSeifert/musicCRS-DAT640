@@ -28,6 +28,7 @@ Choose the appropriate intent based on the user's command:
 - "add": Add a song to the playlist
 - "delete": Delete a song from the playlist
 - "clear": Clear the playlist
+- "recommend": Get a song recommendation
 - Questions about songs and albums:
   - "Q1": When was album X released?
   - "Q2": How many albums has artist Y released?
@@ -45,9 +46,10 @@ Always provide the following entities in the JSON response, filling in any entit
 
 ### Entity Requirements by Intent:
 Each intent should include only the specified entities, but always return all entities:
-- `add`: Populate `song` and `artist` if provided; otherwise, leave them as empty strings.
+- `add`: Populate `song` (mandatory) and `artist` (if provided, otherwise leave him as empty strings). If you are not able to find a song title, probably the right intent is 'recommend'.
 - `delete`: Populate `song` or `position` if specified; otherwise, leave them as empty strings.
 - `clear`: No entities are needed, but all entities should still be included as empty strings.
+- `recommend`: No entities are needed, but all entities should still be included as empty strings.
 - `Q1` to `Q6`: Include only the listed entity, but return all entities as empty strings if they are not mentioned:
   - `Q1`: `album`
   - `Q2`: `artist`
@@ -80,6 +82,17 @@ Each intent should include only the specified entities, but always return all en
       "intent": "add",
       "entities": {{
           "song": "thriller",
+          "artist": "",
+          "album": "",
+          "position": ""
+      }}
+  }}
+- User: "Suggest me some songs"
+  Output:
+  {{
+      "intent": "recommend",
+      "entities": {{
+          "song": "",
           "artist": "",
           "album": "",
           "position": ""
