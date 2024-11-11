@@ -29,6 +29,7 @@ Choose the appropriate intent based on the user's command:
 - "delete": Delete a song from the playlist
 - "clear": Clear the playlist
 - "recommend": Get a song recommendation
+- "create": Create a new playlist based on the user's preferences
 - Questions about songs and albums:
   - "Q1": When was album X released?
   - "Q2": How many albums has artist Y released?
@@ -43,6 +44,7 @@ Always provide the following entities in the JSON response, filling in any entit
 - `artist`: The name of an artist, or an empty string if not mentioned
 - `album`: The title of an album, or an empty string if not mentioned
 - `position`: Position in the playlist (e.g., "first", "last"), or an empty string if not mentioned
+- `description`: A description of the playlist that the user wants to create, or an empty string if not mentioned
 
 ### Entity Requirements by Intent:
 Each intent should include only the specified entities, but always return all entities:
@@ -50,6 +52,7 @@ Each intent should include only the specified entities, but always return all en
 - `delete`: Populate `song` or `position` if specified; otherwise, leave them as empty strings.
 - `clear`: No entities are needed, but all entities should still be included as empty strings.
 - `recommend`: No entities are needed, but all entities should still be included as empty strings.
+- `create`: Populate `description`.
 - `Q1` to `Q6`: Include only the listed entity, but return all entities as empty strings if they are not mentioned:
   - `Q1`: `album`
   - `Q2`: `artist`
@@ -63,6 +66,7 @@ Each intent should include only the specified entities, but always return all en
 2. **Include All Entities**: Always return `song`, `artist`, `album`, and `position` as fields in the JSON response, filling with an empty string if not provided.
 3. **Return JSON Only**: Provide only the JSON output, and do not include any extra text or comments.
 4. **Position Entity**: The `position` entity is not empty only in a delete intent. It should be an array of integers e.g. [1] if the user wants to delete the second song, or [0,1,2] if the user wants to delete the first three songs.
+5. **Description Entity**: The `description` entity is not empty only in a create intent. It should be a string with the description of the playlist that the user wants to create.
 
 ### Examples:
 - User: "add bohemian rhapsody by Queen to my playlist"
@@ -73,7 +77,8 @@ Each intent should include only the specified entities, but always return all en
           "song": "bohemian rhapsody",
           "artist": "Queen",
           "album": "",
-          "position": ""
+          "position": "",
+            "description": ""
       }}
   }}
 - User: "Add thriller to my playlist"
@@ -84,7 +89,8 @@ Each intent should include only the specified entities, but always return all en
           "song": "thriller",
           "artist": "",
           "album": "",
-          "position": ""
+          "position": "",
+            "description": ""
       }}
   }}
 - User: "Suggest me some songs"
@@ -95,7 +101,8 @@ Each intent should include only the specified entities, but always return all en
           "song": "",
           "artist": "",
           "album": "",
-          "position": ""
+          "position": "",
+            "description": ""
       }}
   }}
 - User: "delete bohemian rhapsody from my playlist"
@@ -106,7 +113,8 @@ Each intent should include only the specified entities, but always return all en
           "song": "bohemian rhapsody",
           "artist": "",
           "album": "",
-          "position": ""
+          "position": "",
+            "description": ""
       }}
   }}
   - User: "delete song number five and two"
@@ -117,7 +125,8 @@ Each intent should include only the specified entities, but always return all en
           "song": "",
           "artist": "",
           "album": "",
-          "position": "[4,1]"
+          "position": "[4,1]",
+            "description": ""
       }}
   }}
 - User: "When was 1989 released?"
@@ -128,7 +137,20 @@ Each intent should include only the specified entities, but always return all en
           "song": "",
           "artist": "",
           "album": "1989",
+          "position": "",
+            "description": ""
+      }}
+  }}
+- User: "Create a playlist with sad love songs"
+  Output:
+  {{
+      "intent": "create",
+      "entities": {{
+          "song": "",
+          "artist": "",
+          "album": "",
           "position": ""
+          "description": "sad love songs"
       }}
   }}
 
