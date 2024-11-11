@@ -150,4 +150,17 @@ def get_recommendations(
         by=["count", "track_popularity"], ascending=[False, False], inplace=True
     )
 
-    return popularity_df.index[:top_n].tolist()
+    # Filter out any songs that are already in the playlist
+    recommended_songs = [
+        song for song in popularity_df.index if song not in playlist_track_ids
+    ]
+
+    # Ensure we return exactly top_n recommendations
+    return (
+        recommended_songs[:top_n]
+        if len(recommended_songs) >= top_n
+        else recommended_songs
+        + popularity_df.index.difference(recommended_songs).tolist()[
+            : top_n - len(recommended_songs)
+        ]
+    )

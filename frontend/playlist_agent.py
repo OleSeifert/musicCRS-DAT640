@@ -300,7 +300,7 @@ class PlaylistAgent(Agent):
             )
         self._dialogue_connector.register_agent_utterance(utterance)
 
-    #position is a list of integers
+    # position is a list of integers
     def delete_songs_by_position(self, position: list) -> None:
         """Deletes songs from the playlist.
 
@@ -556,42 +556,20 @@ class PlaylistAgent(Agent):
             self.suggest_command_not_utilized()
             return
 
-        #TODO
+        # TODO
         if self.separate_utterance(utterance.text)[0] == "/recommend":
             self.counter += 1
-
-            # Assume "africa" is a sample query for recommendations, can be replaced with actual logic
-            songs = self.dbmanager.find_song_only_by_title("africa")
-
-            # If we have songs, we serialize them and send them to the new endpoint
-            if songs:
-                # Serialize the songs
-                songs_data = [song.serialize() for song in songs]
-
-                # Send POST request to new endpoint for recommendations
-                url = "http://localhost:5002/add_recommendations"
-                response = requests.post(url, json=songs_data)
-
-                if response.status_code == 201:
-                    utterance = AnnotatedUtterance(
-                        f"I found {len(songs)} recommendations. Please select them in the recommendation list",
-                        participant=DialogueParticipant.AGENT,
-                    )
-                else:
-                    utterance = AnnotatedUtterance(
-                        "Error: Could not send recommendations to the server.",
-                        participant=DialogueParticipant.AGENT,
-                    )
-                self._dialogue_connector.register_agent_utterance(utterance)
-            else:
-                # If no songs found, notify the user
-                utterance = AnnotatedUtterance(
-                    "Sorry, I couldn't find any recommendations at the moment.",
-                    participant=DialogueParticipant.AGENT,
-                )
-                self._dialogue_connector.register_agent_utterance(utterance)
-
             # Suggest another command after sending recommendations
+            requests.get("http://localhost:5002/add_recommendations")
+
+            response = AnnotatedUtterance(
+                """I have displayed the recommendations in the recommendation
+                list. Please select all the songs you like and add them to the
+                playlist.""",
+                participant=DialogueParticipant.AGENT,
+            )
+            self.dialogue_connector.register_agent_utterance(response)
+
             self.suggest_command_not_utilized()
             return
 
@@ -718,7 +696,9 @@ class PlaylistAgent(Agent):
                 self.commands_not_utilized.remove("delete")
 
             song_title = post_processing.extract_song(ollama_response)
-            position = post_processing.vector_position(post_processing.extract_position(ollama_response))
+            position = post_processing.vector_position(
+                post_processing.extract_position(ollama_response)
+            )
 
             if position:
                 self.delete_songs_by_position(position)

@@ -705,3 +705,32 @@ class DatabaseManager:
         connection.commit()
         cursor.close()
         connection.close()
+
+    def fetch_songs_by_track_ids(self, track_ids: List[str]) -> List[Song]:
+        """Fetches songs by their track IDs.
+
+        Args:
+            track_ids: List of track IDs.
+
+        Returns:
+            List of song objects.
+        """
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            query = f"""
+                SELECT * FROM music WHERE track_id IN ({','.join(['?'] * len(track_ids))})
+            """
+            cursor.execute(query, track_ids)
+            results = cursor.fetchall()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return []
+
+        finally:
+            cursor.close()
+            connection.close()
+
+        return [Song(*result) for result in results]

@@ -14,6 +14,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 from data import database_manager
+from data import recommendations as rec
 from models.playlist import Playlist
 from models.song import Song
 
@@ -59,9 +60,14 @@ def get_suggestions():
 
     return jsonify(suggestions_data), 200
 
+
 @app.route("/recommendations", methods=["GET"])
 def get_recommendations():
-    """Returns the recommendations as strings with an indication if they are in the playlist."""
+    """Returns the recommendations as strings with an indication if they are in
+    the playlist.
+
+    It is called from the `index.html` file to update the recommendations list.
+    """
 
     playlist_track_ids = {song.track_id for song in playlist.songs}
 
@@ -242,89 +248,47 @@ def add_suggestions():
     return jsonify(results), 201
 
 
-@app.route("/add_recommendations", methods=["POST"])
+@app.route("/add_recommendations", methods=["GET"])
 def add_recommendations():
     """Adds multiple songs to the recommendations list."""
-    data = request.get_json()
 
-    if not isinstance(data, list):
-        return jsonify({"error": "Invalid data format. Expected a list of songs."}), 400
+    track_ids = [song.track_id for song in playlist.songs]
+    db_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../data/final_database.db")
+    )
+
+    # Get recommendations
+    recommendation_ids = rec.get_recommendations(
+        db_path=db_path, playlist_track_ids=track_ids
+    )
+
+    # Fetch song data from the database using track ids
+    db_manager = database_manager.DatabaseManager(db_path)
+    recommendation_songs = db_manager.fetch_songs_by_track_ids(recommendation_ids)
 
     results = []
     recommendations.clear()  # clear suggestions
 
-    for song_data in data:
-        new_song = Song(
-            album_id=song_data.get("album_id"),
-            album_name=song_data.get("album_name"),
-            album_popularity=song_data.get("album_popularity"),
-            album_type=song_data.get("album_type"),
-            artists=song_data.get("artists"),
-            artist_0=song_data.get("artist_0"),
-            artist_1=song_data.get("artist_1"),
-            artist_2=song_data.get("artist_2"),
-            artist_3=song_data.get("artist_3"),
-            artist_4=song_data.get("artist_4"),
-            artist_id=song_data.get("artist_id"),
-            duration_sec=song_data.get("duration_sec"),
-            label=song_data.get("label"),
-            release_date=song_data.get("release_date"),
-            total_tracks=song_data.get("total_tracks"),
-            track_id=song_data.get("track_id"),
-            track_name=song_data.get("track_name"),
-            track_number=song_data.get("track_number"),
-            artist_genres=song_data.get("artist_genres"),
-            artist_popularity=song_data.get("artist_popularity"),
-            followers=song_data.get("followers"),
-            name=song_data.get("name"),
-            genre_0=song_data.get("genre_0"),
-            genre_1=song_data.get("genre_1"),
-            genre_2=song_data.get("genre_2"),
-            genre_3=song_data.get("genre_3"),
-            genre_4=song_data.get("genre_4"),
-            acousticness=song_data.get("acousticness"),
-            analysis_url=song_data.get("analysis_url"),
-            danceability=song_data.get("danceability"),
-            duration_ms=song_data.get("duration_ms"),
-            energy=song_data.get("energy"),
-            instrumentalness=song_data.get("instrumentalness"),
-            key=song_data.get("key"),
-            liveness=song_data.get("liveness"),
-            loudness=song_data.get("loudness"),
-            mode=song_data.get("mode"),
-            speechiness=song_data.get("speechiness"),
-            tempo=song_data.get("tempo"),
-            time_signature=song_data.get("time_signature"),
-            track_href=song_data.get("track_href"),
-            track_type=song_data.get("track_type"),
-            uri=song_data.get("uri"),
-            valence=song_data.get("valence"),
-            explicit=song_data.get("explicit"),
-            track_popularity=song_data.get("track_popularity"),
-            release_year=song_data.get("release_year"),
-            release_month=song_data.get("release_month"),
-            rn=song_data.get("rn"),
-        )
-
-        result = recommendations.add_song(new_song)
+    for song in recommendation_songs:
+        result = recommendations.add_song(song)
         if result == -1:
             results.append(
                 {
-                    "error": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} is already in suggestions"
+                    "error": f"'{song.track_name}' by {song.artist_0} is already in suggestions"
                 }
             )
         else:
             results.append(
                 {
-                    "message": f"'{song_data.get('track_name')}' by {song_data.get('artist_0')} added to suggestions"
+                    "message": f"'{song.track_name}' by {song.artist_0} added to suggestions"
                 }
             )
-    recommendations.songs.sort(
-        key=lambda song: (
-            song.track_popularity if song.track_popularity is not None else 0
-        ),
-        reverse=True,
-    )
+    # recommendations.songs.sort(
+    #     key=lambda song: (
+    #         song.track_popularity if song.track_popularity is not None else 0
+    #     ),
+    #     reverse=True,
+    # )
     return jsonify(results), 201
 
 
@@ -473,13 +437,16 @@ def add_recommendation_to_playlist():
 
     recommendations.clear()  # Clear the recommendations
 
-    return jsonify(
-        {
-            "message": response_message,
-            "added_songs": [song.serialize() for song in added_songs],
-            "not_found_songs": not_found_songs,
-        }
-    ), 200
+    return (
+        jsonify(
+            {
+                "message": response_message,
+                "added_songs": [song.serialize() for song in added_songs],
+                "not_found_songs": not_found_songs,
+            }
+        ),
+        200,
+    )
 
 
 if __name__ == "__main__":
