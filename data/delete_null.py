@@ -12,6 +12,8 @@ total_rows_before = cursor.fetchone()[0]
 cursor.execute("DELETE FROM music WHERE acousticness IS NULL")  # sostituisci con il nome della tua tabella
 conn.commit()
 
+cursor.execute("DELETE FROM music WHERE track_popularity IS NULL")  # sostituisci con il nome della tua tabella
+conn.commit()
 # Conta il numero di righe dopo la cancellazione
 cursor.execute("SELECT COUNT(*) FROM music")
 total_rows_after = cursor.fetchone()[0]
