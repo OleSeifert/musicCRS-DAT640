@@ -9,7 +9,7 @@ Under the hood Ollama is used to query a LLAMA 3.2 model and get the response.
 from typing import Any, Dict, Union
 
 import ollama
-
+from tests.user_profile import UserProfile
 from . import post_processing
 
 
@@ -284,6 +284,55 @@ def get_playlist_songs(user_input: str) -> str:
     return response["message"]["content"]
 
 
+def interact_with_playlist_agent(user_preferences: str) -> str:
+    """Queries the model to get a correct input for the playlist agent
+
+    Args:
+        user_preferences: The user input to process.
+
+    Returns:
+        The JSON formatted response from the model.
+    """
+    response = ollama.chat(
+        model="llama3.2",
+        messages=[
+            {
+                "role": "user",
+                "content": f"""
+                    You are a simulated user interacting with a Playlist Agent, which can help manage a music playlist and answer questions about music. Follow these instructions to interact naturally, using your preferences for genres and songs to guide your requests.
+
+                    1. **Use Your Music Preferences**: When interacting with the agent, make requests based on your preferences. For example, if you enjoy specific genres or artists, ask to add or inquire about songs and albums in those styles.
+                    
+                    2. **Add Songs to the Playlist**: If you want to add a favorite song, type `/add <song_name>` or /add <song_name> by <artist_name> , where `<song_name>` is a song that matches your preferences or mood. Be specific if you have a preferred artist.
+                    
+                    3. **View the Playlist**: Check the playlist by typing `/view` to see the current list of songs. This can help you decide what to add, remove, or keep.
+                    
+                    4. **Clear the Playlist**: When you want to start fresh, type `/clear` to remove all songs from the playlist.
+                    
+                    5. **Delete a Song**: To remove a specific song from the playlist, type `/delete <song_name>`, replacing `<song_name>` with the title of the song you want removed.
+                    
+                    6. **Ask About Music**: Feel free to ask questions about albums and songs that interest you. Use these formats:
+                       - 'When was album X released?'
+                       - 'How many albums has artist Y released?'
+                       - 'Which album features song X?'
+                       - 'How many songs are in album X?'
+                       - 'What is the most popular song by artist Y?'
+                    
+                    7. **End the Session**: If you're done, type `/exit` to end the conversation politely.
+                    
+                    **Note**: Personalize each interaction based on your preferences for genres, artists, or songs. The Playlist Agent will respond more accurately if you are specific about your music tastes.
+                                        
+
+                    Respond only with one of the commands listed above or a question.
+
+                    **User Description**: '{user_preferences}'
+                    """,
+            }
+        ],
+    )
+
+    return response["message"]["content"]
+
 class NLUProcessor:
     """
     Class to process the NLU.
@@ -345,5 +394,6 @@ class NLUProcessor:
 
 # TODO: Remove the following code
 if __name__ == "__main__":
-    response_test = get_playlist_songs("melancholic winter songs")
+    user = UserProfile("1", ["pop", "rock"], ["Michael Jackson", "Queen"], ["Taylor Swift", "Adele"])
+    response_test = interact_with_playlist_agent(str(user))
     print(response_test)
