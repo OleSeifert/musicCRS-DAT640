@@ -3,7 +3,7 @@ playlist_agent.
 """
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 
 @dataclass
@@ -12,14 +12,14 @@ class UserProfile:
 
     Attributes:
         id: User ID.
-        preferences: List of user preferences.
-        liked_artists: List of liked artists. Defaults to None.
-        disliked_arists: List of disliked artists. Defaults to None.
+        preferences: List of user preferred Song by Artist.
+        prefered_artists: List of user preferred artists.
+        prefered_songs: List of user preferred songs.
         goal: User goal. Defaults to "Create a playlist".
     """
 
     id: str
     preferences: List[str]
-    liked_artists: Optional[List[str]] = None
-    disliked_arists: Optional[List[str]] = None
-    goal: str = "Create a playlist"  # TODO: Update goal
+    prefered_artists: List[str]
+    prefered_songs: List[str]
+    goal: str = "Create a playlist"

@@ -46,9 +46,7 @@ class SimulationPlatform(Platform):
         Raises:
             Exception: If an error occurs during the dialogue.
         """
-        self._active_users[user_id] = simulator_class(
-            user_id, **simulator_config
-        )
+        self._active_users[user_id] = simulator_class(user_id, **simulator_config)
         dialogue_connector = DialogueConnector(
             agent=self.agent,
             user=self._active_users[user_id],
@@ -82,9 +80,7 @@ class SimulationPlatform(Platform):
         """
         print(f"\033[1m {agent_id}\033[0m: {utterance.text}")
 
-    def display_user_utterance(
-        self, utterance: Utterance, user_id: str
-    ) -> None:
+    def display_user_utterance(self, utterance: Utterance, user_id: str) -> None:
         """Displays a user utterance.
 
         Args:
