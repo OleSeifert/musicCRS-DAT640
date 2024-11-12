@@ -193,15 +193,11 @@ def get_playlist_songs(user_input: str) -> str:
 
                     - **genre**: A list of genres that fit the playlist description (e.g., ["pop", "rock", "jazz"]).
 
-                    - **acousticness**: A measure of whether the track is acoustic. Choose "low" for non-acoustic, "mid" for moderately acoustic, and "high" for strongly acoustic tracks.
-
                     - **danceability**: Describes how suitable a track is for dancing, based on musical elements like tempo, beat, and rhythm. Use "low" for less danceable tracks, "mid" for moderately danceable, and "high" for highly danceable.
 
                     - **energy**: Represents the intensity and activity level of a track. High-energy tracks are fast, loud, and intense, while low-energy tracks are calm and relaxing. For descriptions like "calm," "chill," "romantic," "relaxing," or "soft," choose "low" energy. For balanced or neutral energy, use "mid," and for upbeat, active, or intense music, use "high."
 
-                    - **speechiness**: Detects the presence of spoken words in a track. Use "low" for mostly musical tracks, "mid" for a mix of speech and music (e.g., rap), and "high" for primarily spoken content.
-
-                    - **tempo**: The speed or pace of a track in beats per minute (BPM). Choose "low" for slow tracks, "mid" for moderate tempo, and "high" for fast-paced tracks.
+                    - **tempo**: The speed or pace of a track in beats per minute (BPM). Choose "low" for slow tracks, "mid" for moderate tempo, and "high" for fast-paced tracks. Consider tracks below 100 BPM as "low," between 100 and 140 BPM as "mid," and above 140 BPM as "high."
 
                     - **valence**: Indicates the positivity of a track. Use "low" for sad or somber music, "mid" for neutral mood, and "high" for happy or upbeat tracks.
 
@@ -209,7 +205,7 @@ def get_playlist_songs(user_input: str) -> str:
                     1. Interpret the description to infer the genre and characteristics of the music the user is looking for.
                     2. Populate only the fields most relevant to the description:
                     - **genre**: List of genres (e.g., ["pop", "rock"]).
-                    - **acousticness, danceability, energy, speechiness, tempo, valence**: Each a string ("low", "mid", or "high") to represent the music characteristics as described above.
+                    - **danceability, energy, tempo, valence**: Each a string ("low", "mid", or "high") to represent the music characteristics as described above.
                     3. Use the keywords provided in the field descriptions to help interpret the intended energy and mood level accurately.
                     4. Always provide data for each relevant field. If a specific characteristic is not explicitly described but seems important, infer it based on the general mood or theme of the playlist description.
 
@@ -218,10 +214,8 @@ def get_playlist_songs(user_input: str) -> str:
 
                     {{
                         "genre": ["genre_1", "genre_2"],
-                        "acousticness": "low | mid | high",
                         "danceability": "low | mid | high",
                         "energy": "low | mid | high",
-                        "speechiness": "low | mid | high",
                         "tempo": "low | mid | high",
                         "valence": "low | mid | high"
                     }}
@@ -251,7 +245,6 @@ def get_playlist_songs(user_input: str) -> str:
 
                     {{
                         "genre": ["acoustic", "folk"],
-                        "acousticness": "high",
                         "energy": "low",
                         "tempo": "low",
                         "valence": "mid"
@@ -265,8 +258,6 @@ def get_playlist_songs(user_input: str) -> str:
 
                     {{
                         "genre": ["instrumental"],
-                        "speechiness": "low",
-                        "acousticness": "mid"
                     }}
 
                     Respond only with the JSON output in the specified format.
@@ -317,8 +308,28 @@ class NLUProcessor:
 
         return json_data
 
+    def generate_playlist(self, user_input: str) -> Union[Dict[str, Any], None]:
+        """Queries the model to get parameters for playlist songs.
+
+        It is used for the `recommend` intent to get the playlist parameters,
+        which are then used to query the database for the playlist songs.
+
+        Args:
+            user_input: The user input to process.
+
+        Returns:
+            The playlist parameters extracted from the user input.
+        """
+        # Call the model with the user input
+        response = get_playlist_songs(user_input)
+
+        # Parse the json response
+        json_data = post_processing.post_process_response(response)
+
+        return json_data
+
 
 # TODO: Remove the following code
 if __name__ == "__main__":
-    response = get_playlist_songs("melancholic winter songs")
-    print(response)
+    response_test = get_playlist_songs("melancholic winter songs")
+    print(response_test)
