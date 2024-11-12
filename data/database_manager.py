@@ -734,3 +734,80 @@ class DatabaseManager:
             connection.close()
 
         return [Song(*result) for result in results]
+
+    def query_songs_for_playlist_generation(
+        self,
+        tempo_range: List[int],
+        danceability_range: List[float],
+        valence_range: List[float],
+        energy_range: List[float],
+        genres: List[str],
+        num_songs: int = 10,
+    ) -> List[Song]:
+        """Queries db for songs to generate a playlist with specified features.
+
+        Args:
+            tempo_range: Range of tempo. From 0 to 250.
+            danceability_range: Range of danceability. From 0.0 to 1.0.
+            valence_range: Range of valence. From 0.0 to 1.0.
+            energy_range: Range of energy. From 0.0 to 1.0.
+            genres: List of genres. Possibly empty.
+            num_songs: Number of songs to return. Defaults to 10.
+
+        Returns:
+            A list of song objects, that match the specified features.
+
+        Raises:
+            sqlite3.Error: If an error occurs while querying the database.
+        """
+        connection = sqlite3.connect(self.db_path)
+        cursor = connection.cursor()
+
+        try:
+            # Start building the SQL query
+            query = """
+            SELECT * FROM music
+            WHERE tempo BETWEEN ? AND ?
+            AND danceability BETWEEN ? AND ?
+            AND valence BETWEEN ? AND ?
+            AND energy BETWEEN ? AND ?
+            """
+            params = [
+                tempo_range[0],
+                tempo_range[1],
+                danceability_range[0],
+                danceability_range[1],
+                valence_range[0],
+                valence_range[1],
+                energy_range[0],
+                energy_range[1],
+            ]
+
+            # Add genre filtering
+            if genres:
+                genre_conditions = []
+                for genre in genres:
+                    genre_conditions.append("genre_0 LIKE ?")
+                    params.append(f"%{genre}%")
+                query += f" AND ({' OR '.join(genre_conditions)})"
+
+            # Sort by popularity and limit the number of results
+            query += " ORDER BY track_popularity DESC LIMIT ?"
+            params.append(num_songs)
+
+            # Execute the query
+            cursor.execute(query, params)
+            results = cursor.fetchall()
+
+        except sqlite3.Error as e:
+            print(f"Error: {e}")
+            return []
+
+        finally:  # Tear down
+            cursor.close()
+            connection.close()
+
+        # Convert results to Song objects
+        songs = [Song(*result) for result in results]
+
+        return songs
