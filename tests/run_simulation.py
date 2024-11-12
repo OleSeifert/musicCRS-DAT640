@@ -3,9 +3,9 @@
 import argparse
 import logging
 
-from musiccrs.musiccrs import MusicCRS  # TODO: update accordingly
-from simulation.naive_user_simulator import NaiveUserSimulator
-from simulation.simulation_platform import SimulationPlatform
+from frontend import playlist_agent # TODO: update accordingly
+from naive_user_simulator import NaiveUserSimulator
+from simulation_platform import SimulationPlatform
 
 
 def parse_args() -> argparse.Namespace:
@@ -23,7 +23,7 @@ def parse_args() -> argparse.Namespace:
 if __name__ == "__main__":
     args = parse_args()
 
-    platform = SimulationPlatform(MusicCRS)  # TODO: Update agent name
+    platform = SimulationPlatform(playlist_agent.PlaylistAgent)  # TODO: Update agent name
     logging.info(f"Running {args.num_simulations} simulations")
     for i in range(1, args.num_simulations + 1):
         # Note: This creates a new agent each time to avoid state issues.
@@ -31,6 +31,10 @@ if __name__ == "__main__":
         platform.start()
         print(f"\n--- Staring simulation {i} ---\n")
         platform.connect(f"SimulatedUser{i}", NaiveUserSimulator)
+
+
+
+
         platform.disconnect(f"SimulatedUser{i}")
         print(f"\n--- Finished simulation {i} ---\n")
     logging.info("All simulations finished")
