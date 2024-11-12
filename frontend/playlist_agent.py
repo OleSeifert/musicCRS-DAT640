@@ -827,6 +827,32 @@ class PlaylistAgent(Agent):
             )
             self.dialogue_connector.register_agent_utterance(response)
 
+        elif intent == "create":
+            self.counter += 1
+            description = post_processing.extract_description(ollama_response)
+            if description:
+                description_response = nlu_processor.generate_playlist(description)
+                resp = requests.post("http://localhost:5002/create_playlist", json=description_response)
+                if resp.status_code == 201:
+                    response = AnnotatedUtterance(
+                        f"I created the playlist that best fits your description",
+                        participant=DialogueParticipant.AGENT,
+                    )
+                else:
+                    response = AnnotatedUtterance(
+                        f"Sorry, I couldn't create the playlist",
+                        participant=DialogueParticipant.AGENT,
+                    )
+            else:
+                response = AnnotatedUtterance(
+                    "Please provide a more accurate description of the playlist you want to create",
+                    participant=DialogueParticipant.AGENT,
+                )
+
+            self.dialogue_connector.register_agent_utterance(response)
+            self.suggest_command_not_utilized()
+            return
+
         response = AnnotatedUtterance(
             "I don't know this command, please type '/help' to see all the available commands",
             participant=DialogueParticipant.AGENT,
