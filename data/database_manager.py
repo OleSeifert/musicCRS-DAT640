@@ -760,54 +760,66 @@ class DatabaseManager:
         Raises:
             sqlite3.Error: If an error occurs while querying the database.
         """
-        connection = sqlite3.connect(self.db_path)
-        cursor = connection.cursor()
-
+        songs = []
         try:
-            # Start building the SQL query
-            query = """
-            SELECT * FROM music
-            WHERE tempo BETWEEN ? AND ?
-            AND danceability BETWEEN ? AND ?
-            AND valence BETWEEN ? AND ?
-            AND energy BETWEEN ? AND ?
-            """
-            params = [
-                tempo_range[0],
-                tempo_range[1],
-                danceability_range[0],
-                danceability_range[1],
-                valence_range[0],
-                valence_range[1],
-                energy_range[0],
-                energy_range[1],
-            ]
+            connection = sqlite3.connect(self.db_path)
+            cursor = connection.cursor()
 
-            # Add genre filtering
-            if genres:
-                genre_conditions = []
-                for genre in genres:
-                    genre_conditions.append("genre_0 LIKE ?")
-                    params.append(f"%{genre}%")
-                query += f" AND ({' OR '.join(genre_conditions)})"
+            # Helper function to execute query
+            def execute_query(with_genre=True):
+                # Start building the SQL query
+                query = """
+                SELECT * FROM music
+                WHERE tempo BETWEEN ? AND ?
+                  AND danceability BETWEEN ? AND ?
+                  AND valence BETWEEN ? AND ?
+                  AND energy BETWEEN ? AND ?
+                """
+                params = [
+                    tempo_range[0],
+                    tempo_range[1],
+                    danceability_range[0],
+                    danceability_range[1],
+                    valence_range[0],
+                    valence_range[1],
+                    energy_range[0],
+                    energy_range[1],
+                ]
 
-            # Sort by popularity and limit the number of results
-            query += " ORDER BY track_popularity DESC LIMIT ?"
-            params.append(num_songs)
+                # Add genre filtering if enabled
+                if with_genre and genres:
+                    genre_conditions = []
+                    for genre in genres:
+                        genre_conditions.append("genre_0 LIKE ?")
+                        params.append(f"%{genre}%")
+                    query += f" AND ({' OR '.join(genre_conditions)})"
 
-            # Execute the query
-            cursor.execute(query, params)
-            results = cursor.fetchall()
+                # Sort by popularity and limit the number of results
+                query += " ORDER BY track_popularity DESC LIMIT ?"
+                params.append(num_songs)
+
+                # Execute the query
+                cursor.execute(query, params)
+                return cursor.fetchall()
+
+            # First attempt with genre filtering
+            results = execute_query(with_genre=True)
+
+            # If no results, try again without genre filtering
+            if not results:
+                results = execute_query(with_genre=False)
+
+            # Convert results to Song objects
+            songs = [Song(*result) for result in results]
 
         except sqlite3.Error as e:
-            print(f"Error: {e}")
-            return []
+            print(f"Database error: {e}")
 
-        finally:  # Tear down
-            cursor.close()
-            connection.close()
-
-        # Convert results to Song objects
-        songs = [Song(*result) for result in results]
+        finally:
+            # Ensure resources are cleaned up
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
 
         return songs

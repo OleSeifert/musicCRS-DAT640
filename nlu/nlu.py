@@ -186,28 +186,28 @@ def get_playlist_songs(user_input: str) -> str:
             {
                 "role": "user",
                 "content": f"""
-                    You are a playlist creation assistant. Given a description of the playlist a user wants to create, you will analyze the mood, style, and intended vibe of the playlist and output a structured JSON response containing only the fields most relevant to the request. This means you should include fields only if they are important for accurately capturing the user's intent. For example, if the user describes "instrumental music," the `speechiness` field should be prioritized, as it indicates the presence of spoken words.
+                    You are a playlist creation assistant. Given a description of the playlist a user wants to create, you will analyze the mood, style, and intended vibe of the playlist and output a structured JSON response. Include fields only if they are important for accurately capturing the user's intent.
 
                     ### Field Descriptions:
-                    Use these descriptions to interpret the user’s playlist request and assign values accurately:
+                    Use these descriptions to interpret the user’s playlist request and assign values accurately. Pay close attention to mood-related keywords (e.g., "melancholic," "chill," "romantic," "soft," "calm," "winter"), as these often indicate a lower energy level.
 
-                    - **genre**: A list of genres that fit the playlist description (e.g., ["pop", "rock", "jazz"]).
+                    - **genre**: A list of genres that fit the playlist description (e.g., ["pop", "rock", "jazz"]). If relevant, include multiple genres that might align with the description to capture the user’s intended atmosphere.
 
                     - **danceability**: Describes how suitable a track is for dancing, based on musical elements like tempo, beat, and rhythm. Use "low" for less danceable tracks, "mid" for moderately danceable, and "high" for highly danceable.
 
-                    - **energy**: Represents the intensity and activity level of a track. High-energy tracks are fast, loud, and intense, while low-energy tracks are calm and relaxing. For descriptions like "calm," "chill," "romantic," "relaxing," or "soft," choose "low" energy. For balanced or neutral energy, use "mid," and for upbeat, active, or intense music, use "high."
+                    - **energy**: Represents the intensity and activity level of a track. High-energy tracks are fast, loud, and intense, while low-energy tracks are calm and relaxing. For descriptions like "calm," "chill," "romantic," "melancholic," "winter," or "soft," choose "low" energy. For balanced or neutral energy, use "mid." For upbeat, active, or intense music, use "high."
 
-                    - **tempo**: The speed or pace of a track in beats per minute (BPM). Choose "low" for slow tracks, "mid" for moderate tempo, and "high" for fast-paced tracks. Consider tracks below 100 BPM as "low," between 100 and 140 BPM as "mid," and above 140 BPM as "high."
+                    - **tempo**: The speed or pace of a track in beats per minute (BPM). Choose "low" for slow tracks, "mid" for moderate tempo, and "high" for fast-paced tracks. Generally, tracks below 100 BPM are "low," between 100 and 140 BPM are "mid," and above 140 BPM are "high."
 
                     - **valence**: Indicates the positivity of a track. Use "low" for sad or somber music, "mid" for neutral mood, and "high" for happy or upbeat tracks.
 
                     ### Instructions:
                     1. Interpret the description to infer the genre and characteristics of the music the user is looking for.
                     2. Populate only the fields most relevant to the description:
-                    - **genre**: List of genres (e.g., ["pop", "rock"]).
-                    - **danceability, energy, tempo, valence**: Each a string ("low", "mid", or "high") to represent the music characteristics as described above.
-                    3. Use the keywords provided in the field descriptions to help interpret the intended energy and mood level accurately.
-                    4. Always provide data for each relevant field. If a specific characteristic is not explicitly described but seems important, infer it based on the general mood or theme of the playlist description.
+                        - **genre**: List of genres (e.g., ["pop", "rock"]). If appropriate, include multiple genres.
+                        - **danceability, energy, tempo, valence**: Each a string ("low", "mid", or "high") to represent the music characteristics as described above.
+                    3. Pay close attention to keywords in the description to interpret energy accurately, especially for mood-specific requests like "melancholic," "chill," or "calm."
+                    4. Provide data for each relevant field based on the theme of the playlist description.
 
                     ### Output Format:
                     Respond only with a JSON object in this format:
@@ -258,6 +258,19 @@ def get_playlist_songs(user_input: str) -> str:
 
                     {{
                         "genre": ["instrumental"],
+                        "speechiness": "low"
+                    }}
+
+                    #### Example 4
+                    **User Description:** “Melancholic winter songs.”
+
+                    **Expected Output:**
+
+                    {{
+                        "genre": ["ambient", "folk", "indie"],
+                        "energy": "low",
+                        "tempo": "low",
+                        "valence": "low"
                     }}
 
                     Respond only with the JSON output in the specified format.
@@ -325,6 +338,7 @@ class NLUProcessor:
 
         # Parse the json response
         json_data = post_processing.post_process_response(response)
+        print(json_data)
 
         return json_data
 

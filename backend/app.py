@@ -17,7 +17,9 @@ from data import database_manager
 from data import recommendations as rec
 from models.playlist import Playlist
 from models.song import Song
-from nlu import post_processing, mappings
+from nlu import mappings, post_processing
+
+DB_PATH = os.path.abspath("data/final_database.db")
 
 app = Flask(__name__)
 CORS(app)
@@ -248,20 +250,25 @@ def add_suggestions():
     )
     return jsonify(results), 201
 
+
 @app.route("/create_playlist", methods=["POST"])
 def create_entire_playlist():
     """Adds multiple songs to the playlist."""
     data = request.get_json()
     valence = mappings.VALENCE_MAPPING[post_processing.extract_valence(data)]
     energy = mappings.ENERGY_MAPPING[post_processing.extract_energy(data)]
-    danceability = mappings.DANCEABILITY_MAPPING[post_processing.extract_danceability(data)]
+    danceability = mappings.DANCEABILITY_MAPPING[
+        post_processing.extract_danceability(data)
+    ]
     tempo = mappings.TEMPO_MAPPING[post_processing.extract_tempo(data)]
     genres = post_processing.extract_genres(data)
     number_of_songs = 10
 
-    db_manager = database_manager.DatabaseManager('final_database.db')
+    db_manager = database_manager.DatabaseManager(DB_PATH)
     playlist.clear()
-    playlist.songs = db_manager.query_songs_for_playlist_generation(tempo, danceability, valence, energy, genres, number_of_songs)
+    playlist.songs = db_manager.query_songs_for_playlist_generation(
+        tempo, danceability, valence, energy, genres, number_of_songs
+    )
 
     results = []
     return jsonify(results), 201

@@ -832,7 +832,9 @@ class PlaylistAgent(Agent):
             description = post_processing.extract_description(ollama_response)
             if description:
                 description_response = nlu_processor.generate_playlist(description)
-                resp = requests.post("http://localhost:5002/create_playlist", json=description_response)
+                resp = requests.post(
+                    "http://localhost:5002/create_playlist", json=description_response
+                )
                 if resp.status_code == 201:
                     response = AnnotatedUtterance(
                         f"I created the playlist that best fits your description",
