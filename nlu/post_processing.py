@@ -151,6 +151,77 @@ def vector_position(position: str) -> list:
         return [int(x) for x in position[1:-1].split(",")]
     return []
 
+def extract_description(response: Dict[str, Any]) -> str:
+    """Extracts the position from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The description of the playlist extracted from the response.
+    """
+    return response.get("entities", {}).get("description", "")
+
+
+# extract list of genres IF IS PRESENT in the response
+def extract_genres(response: Dict[str, Any]) -> list:
+    """Extracts the genres from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The genres extracted from the response.
+    """
+    return response.get("genre", [])
+
+
+def extract_danceability(response: Dict[str, Any]) -> str:
+    """Extracts the danceability from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The danceability extracted from the response.
+    """
+    return response.get("danceability", "")
+
+def extract_energy(response: Dict[str, Any]) -> str:
+    """Extracts the energy from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The energy extracted from the response.
+    """
+    return response.get("energy", "")
+
+
+def extract_tempo(response: Dict[str, Any]) -> str:
+    """Extracts the tempo from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The tempo extracted from the response.
+    """
+    return response.get("tempo", "")
+
+def extract_valence(response: Dict[str, Any]) -> str:
+    """Extracts the valence from the NLU response.
+
+    Args:
+        response: The cleaned JSON data from the NLU model.
+
+    Returns:
+        The valence extracted from the response.
+    """
+    return response.get("valence", "")
+
+
 
 
 
