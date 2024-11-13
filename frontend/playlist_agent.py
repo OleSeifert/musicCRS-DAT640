@@ -1,4 +1,4 @@
-"""Simplest possible agent that parrots back everything the user says."""
+"""The playlist agent for the music conversational recommender system."""
 
 import os
 import random
@@ -14,10 +14,6 @@ from dialoguekit.participant.participant import DialogueParticipant
 from backend import parsing
 from data.database_manager import DatabaseManager
 from nlu import nlu, post_processing
-
-
-def connect_db():
-    return sqlite3.connect("../data/final_database.db")
 
 
 class PlaylistAgent(Agent):
@@ -66,38 +62,10 @@ class PlaylistAgent(Agent):
             "Q6": "Did you know you can ask me the most popular song by an artist by typing 'What is the most popular song by artist Y?'?",
         }
 
-    # def find_song_in_db(self, song_title: str, artist: str = None):
-    #     """Find a song in the database.
-
-    #     Args:
-    #         song_title: Song title.
-    #         artist: Artist name.
-
-    #     """
-    #     conn = connect_db()
-    #     cursor = conn.cursor()
-
-    #     if artist:
-    #         cursor.execute(
-    #             "SELECT * FROM music WHERE track_name=? AND artists LIKE ?",
-    #             (song_title, f"%{artist}%"),
-    #         )
-    #     else:
-    #         cursor.execute("SELECT * FROM music WHERE track_name=?", (song_title,))
-
-    #     result = cursor.fetchall()  # Prende tutte le occorrenze
-
-    #     conn.close()
-
-    #     if result:
-    #         return result[0], len(result)  # Per ora prendiamo solo la prima
-    #     else:
-    #         return None, None
-
     def parse_command(
         self, command: str
     ) -> Union[Tuple[str, str], Tuple[str, None], Tuple[None, None]]:
-        """Parse the command and separate artist and title.
+        """Parses the command and separates artist and title.
 
         It uses the separators ' : ' and ' by '.
 
@@ -159,7 +127,7 @@ class PlaylistAgent(Agent):
         """Sends the agent's goodbye message."""
         utterance = AnnotatedUtterance(
             "It was nice talking to you. Bye",
-            intent=self.stop_intent,
+            # intent=self.stop_intent,
             participant=DialogueParticipant.AGENT,
         )
         self._dialogue_connector.register_agent_utterance(utterance)
@@ -316,12 +284,12 @@ class PlaylistAgent(Agent):
         response = requests.delete(url, json=delete_data)
         if response.status_code == 200:
             utterance = AnnotatedUtterance(
-                f"The songs have been removed from the playlist",
+                "The songs have been removed from the playlist",
                 participant=DialogueParticipant.AGENT,
             )
         elif response.status_code == 401:
             utterance = AnnotatedUtterance(
-                f"Please, provide correct positions for the songs that you want to delete.",
+                "Please, provide correct positions for the songs that you want to delete.",
                 participant=DialogueParticipant.AGENT,
             )
         self._dialogue_connector.register_agent_utterance(utterance)

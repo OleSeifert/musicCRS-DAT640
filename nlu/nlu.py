@@ -9,7 +9,9 @@ Under the hood Ollama is used to query a LLAMA 3.2 model and get the response.
 from typing import Any, Dict, Union
 
 import ollama
+
 from tests.user_profile import UserProfile
+
 from . import post_processing
 
 
@@ -299,39 +301,77 @@ def interact_with_playlist_agent(user_preferences: str) -> str:
             {
                 "role": "user",
                 "content": f"""
-                    You are a simulated user interacting with a Playlist Agent, which can help manage a music playlist and answer questions about music. Follow these instructions to interact naturally, using your preferences for genres and songs to guide your requests.
+                    You are a simulation agent interacting with the Music Recommender System to create a playlist based on user preferences and goals. The system supports commands and queries for managing and querying playlists, which you should use strategically to meet the user’s goal.
 
-                    1. **Use Your Music Preferences**: When interacting with the agent, make requests based on your preferences. For example, if you enjoy specific genres or artists, ask to add or inquire about songs and albums in those styles.
-                    
-                    2. **Add Songs to the Playlist**: If you want to add a favorite song, type `/add <song_name>` or /add <song_name> by <artist_name> , where `<song_name>` is a song that matches your preferences or mood. Be specific if you have a preferred artist.
-                    
-                    3. **View the Playlist**: Check the playlist by typing `/view` to see the current list of songs. This can help you decide what to add, remove, or keep.
-                    
-                    4. **Clear the Playlist**: When you want to start fresh, type `/clear` to remove all songs from the playlist.
-                    
-                    5. **Delete a Song**: To remove a specific song from the playlist, type `/delete <song_name>`, replacing `<song_name>` with the title of the song you want removed.
-                    
-                    6. **Ask About Music**: Feel free to ask questions about albums and songs that interest you. Use these formats:
-                       - 'When was album X released?'
-                       - 'How many albums has artist Y released?'
-                       - 'Which album features song X?'
-                       - 'How many songs are in album X?'
-                       - 'What is the most popular song by artist Y?'
-                    
-                    7. **End the Session**: If you're done, type `/exit` to end the conversation politely.
-                    
-                    **Note**: Personalize each interaction based on your preferences for genres, artists, or songs. The Playlist Agent will respond more accurately if you are specific about your music tastes.
-                                        
+                    ### Instructions
 
-                    Respond only with one of the commands listed above or a question.
+                    1. **Commands**: Use these to add, delete, clear, view, or get help with the playlist.
+                        - **/add <song>**: Add a song to the playlist.
+                        - **/delete <song>**: Delete a song from the playlist.
+                        - **/clear**: Clear the current playlist.
+                        - **/view**: Show the current playlist.
+                        - **/help**: Show help message.
+                        - **/exit**: Exit the conversation.
 
-                    **User Description**: '{user_preferences}'
+                    2. **Queries**: You can also ask questions about songs and albums in the system’s database:
+                        - "When was album X released?"
+                        - "How many albums has artist Y released?"
+                        - "Which album features song X?"
+                        - "How many songs does album X contain?"
+                        - "How long is album X?"
+                        - "What is the most popular song by artist X?"
+
+                    3. **User Profile**:
+                        Use the provided user profile to inform your actions. Prioritize their preferred genres and liked artists, avoid disliked artists, and work towards achieving the user’s specified goal.
+
+                    ### Example User Profile:
+                    UserProfile(id='1', preferences=['rock', 'pop', 'jazz'], liked_artists=['Taylor Swift', 'Ariana Grande'], disliked_artists=['Justin Bieber'], goal='Create a playlist')
+
+                    ---
+
+                    ### Examples of Interactions
+
+                    **Example 1**
+
+                    **User Profile**:
+                    UserProfile(id='1', preferences=['rock', 'pop', 'jazz'], liked_artists=['Taylor Swift', 'Ariana Grande'], disliked_artists=['Justin Bieber'], goal='Create a playlist')
+
+                    **System Command**: /add Shake It Off by Taylor Swift
+
+                    ---
+
+                    **Example 2**
+
+                    **User Profile**:
+                    UserProfile(id='2', preferences=['jazz', 'classical'], liked_artists=['John Coltrane'], disliked_artists=['Justin Bieber'], goal='Create a playlist')
+
+                    **System Command**: /add A Love Supreme by John Coltrane
+
+                    ---
+
+                    **Example 3**
+
+                    **User Profile**:
+                    UserProfile(id='1', preferences=['rock', 'pop'], liked_artists=['Ariana Grande'], disliked_artists=['Justin Bieber'], goal='Create a playlist')
+
+                    **System Command**: /add 7 rings by Ariana Grande
+
+                    ---
+
+                    ### Task
+
+                    Based on the following user profile and the system commands and queries, respond with the most suitable command or query to help build the playlist. Respond with only the command or query without explanations.
+
+                    **User Profile**:
+                    {user_preferences}
+
                     """,
             }
         ],
     )
 
     return response["message"]["content"]
+
 
 class NLUProcessor:
     """
@@ -394,6 +434,17 @@ class NLUProcessor:
 
 # TODO: Remove the following code
 if __name__ == "__main__":
-    user = UserProfile("1", ["pop", "rock"], ["Michael Jackson", "Queen"], ["Taylor Swift", "Adele"])
+    user = UserProfile(
+        "1",
+        [
+            "Cruel Summer by Taylor Swift",
+            "Africa by Toto",
+            "Let it Be",
+            "Shake It Off by Taylor Swift",
+            "Thriller by Michael Jackson",
+        ],
+        ["Michael Jackson", "Queen"],
+        ["Taylor Swift", "Adele"],
+    )
     response_test = interact_with_playlist_agent(str(user))
     print(response_test)
