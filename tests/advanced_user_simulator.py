@@ -67,7 +67,7 @@ class AdvancedUserSimulator(User):
 
         if choice == "/add":
             self.last_command = "/add " + random.choice(self.songs_to_add)
-            return "/add " + random.choice(self.songs_to_add)
+            return self.last_command
 
         elif choice == "/view":
             return "/view"
