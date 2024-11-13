@@ -7,6 +7,7 @@ from typing import List, Tuple, Union
 
 import requests
 from dialoguekit.core.annotated_utterance import AnnotatedUtterance
+from dialoguekit.core.dialogue_act import DialogueAct
 from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.agent import Agent
 from dialoguekit.participant.participant import DialogueParticipant
@@ -127,11 +128,10 @@ class PlaylistAgent(Agent):
         """Sends the agent's goodbye message."""
         utterance = AnnotatedUtterance(
             "It was nice talking to you. Bye",
-            intent=self.stop_intent,
+            dialogue_acts=[DialogueAct(intent=self.stop_intent)],
             participant=DialogueParticipant.AGENT,
         )
         self._dialogue_connector.register_agent_utterance(utterance)
-
 
     def separate_utterance(self, text: str) -> List[str]:
         """Separates the utterance into command and argument.
@@ -524,7 +524,6 @@ class PlaylistAgent(Agent):
             self.welcome()
             self.suggest_command_not_utilized()
             return
-
         # TODO
         if self.separate_utterance(utterance.text)[0] == "/recommend":
             self.counter += 1
@@ -811,7 +810,7 @@ class PlaylistAgent(Agent):
                     )
                 else:
                     response = AnnotatedUtterance(
-                        f"Sorry, I couldn't create the playlist",
+                        "Sorry, I couldn't create the playlist",
                         participant=DialogueParticipant.AGENT,
                     )
             else:
