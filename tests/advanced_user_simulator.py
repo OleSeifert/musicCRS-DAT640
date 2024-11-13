@@ -54,8 +54,20 @@ class AdvancedUserSimulator(User):
         return AnnotatedUtterance(utterance, participant=DialogueParticipant.USER)
 
     def _choose_command(self) -> str:
-        #options = ["/add"]
-        options = ["/add", "/view", "/recommend"]  # TODO: Add questions
+        """Chooses a command and a user preference.
+
+        Returns:
+            A string witht the command.
+        """
+        # options = ["/add"]
+        options = [
+            "/add",
+            "/view",
+            "/recommend",
+            "Q1",
+            "Q2",
+            "Q3",
+        ]
 
         if self.turns >= self.max_turns or self._num_songs == 10:
             self.last_command = "/exit"
@@ -75,7 +87,14 @@ class AdvancedUserSimulator(User):
             return "/view"
         elif choice == "/recommend":
             return "/recommend"
-        # TODO: Add questions also here
+        elif choice == "Q1":
+            return f"How many albums has artist {random.choice(self.profile.prefered_artists)} released?"
+        elif choice == "Q2":
+            return f"Which album features song {random.choice(self.profile.prefered_songs)}?"
+        elif choice == "Q3":
+            return f"What is the most popular song by artist {random.choice(self.profile.prefered_artists)}?"
+        else:
+            return "/exit"
 
     def receive_utterance(self, utterance: Utterance) -> None:
         """Gets called every time there is a new agent utterance.
@@ -87,10 +106,11 @@ class AdvancedUserSimulator(User):
             if "Please select one in the suggestions list" in utterance.text:
                 # call endpoint
                 response = requests.get("http://localhost:5002/move_first_to_playlist")
-                print("***Simulating User choosing one song from the suggestions list***")
+                print(
+                    "***Simulating User choosing one song from the suggestions list***"
+                )
                 if response.status_code == 200:
                     print("***Song added to playlist***")
-
 
             song = self.last_command.split(" ", maxsplit=1)[1]
             if song in self.songs_to_add:
@@ -100,14 +120,20 @@ class AdvancedUserSimulator(User):
             self._num_songs = len(utterance.text.split("//"))
         elif self.last_command == "/recommend":
             # call endpoint to select 1 song
-            response = requests.post("http://localhost:5002/move_recommendation", json = {"artists": self.profile.prefered_artists})
-            print("***Simulating User choosing one song from the recommendations list***")
+            response = requests.post(
+                "http://localhost:5002/move_recommendation",
+                json={"artists": self.profile.prefered_artists},
+            )
+            print(
+                "***Simulating User choosing one song from the recommendations list***"
+            )
 
             if response.status_code == 200:
-                songs = response.json().get('songs', '')
+                songs = response.json().get("songs", "")
                 for song in songs:
-                    print(f"***Song {song} added to playlist based on user preferences***")
-
+                    print(
+                        f"***Song {song} added to playlist based on user preferences***"
+                    )
 
         # ? How can we detect if playlist is in line with the goal??
         # TODO: Detect if multiple songs are recommended
