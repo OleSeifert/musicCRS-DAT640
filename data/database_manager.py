@@ -314,6 +314,8 @@ class DatabaseManager:
         connection = sqlite3.connect(self.db_path)
         cursor = connection.cursor()
 
+        result = None  # Initialize to suppress warning
+
         try:
             artist_id = self.get_id_for_artist(artist_name)
 
@@ -327,7 +329,11 @@ class DatabaseManager:
                 artist_id = self.fetch_transformed_artist_id(artist_name)
                 if artist_id:
                     cursor.execute(
-                        "SELECT track_name FROM music WHERE artist_id=? ORDER BY track_popularity DESC",
+                        """SELECT track_name
+                            FROM music
+                            WHERE artist_id=?
+                            ORDER BY track_popularity DESC
+                        """,
                         (artist_id,),
                     )
                     result = cursor.fetchone()
@@ -742,9 +748,10 @@ class DatabaseManager:
         valence_range: List[float],
         energy_range: List[float],
         genres: List[str],
-        num_songs: int = 10,
+        duration: int,
     ) -> List[Song]:
-        """Queries db for songs to generate a playlist with specified features.
+        """Queries db for songs to generate a playlist with specified features
+        and checks cumulative duration.
 
         Args:
             tempo_range: Range of tempo. From 0 to 250.
@@ -752,7 +759,7 @@ class DatabaseManager:
             valence_range: Range of valence. From 0.0 to 1.0.
             energy_range: Range of energy. From 0.0 to 1.0.
             genres: List of genres. Possibly empty.
-            num_songs: Number of songs to return. Defaults to 10.
+            duration: Target duration for the playlist in minutes.
 
         Returns:
             A list of song objects, that match the specified features.
@@ -761,13 +768,14 @@ class DatabaseManager:
             sqlite3.Error: If an error occurs while querying the database.
         """
         songs = []
+        target_duration_sec = duration * 60  # Convert minutes to seconds
+
         try:
             connection = sqlite3.connect(self.db_path)
             cursor = connection.cursor()
 
-            # Helper function to execute query
+            # Helper function to execute the query
             def execute_query(with_genre=True):
-                # Start building the SQL query
                 query = """
                 SELECT * FROM music
                 WHERE tempo BETWEEN ? AND ?
@@ -788,38 +796,53 @@ class DatabaseManager:
 
                 # Add genre filtering if enabled
                 if with_genre and genres:
-                    genre_conditions = []
-                    for genre in genres:
-                        genre_conditions.append("genre_0 LIKE ?")
-                        params.append(f"%{genre}%")
+                    genre_conditions = ["genre_0 LIKE ?"] * len(genres)
+                    params.extend([f"%{genre}%" for genre in genres])
                     query += f" AND ({' OR '.join(genre_conditions)})"
 
-                # Sort by popularity and limit the number of results
-                query += " ORDER BY track_popularity DESC LIMIT ?"
-                params.append(num_songs)
+                # Sort by popularity
+                query += " ORDER BY track_popularity DESC"
 
-                # Execute the query
                 cursor.execute(query, params)
                 return cursor.fetchall()
 
+            # Fetch songs and check cumulative duration
+            def select_songs_with_duration_check(results):
+                selected_songs = []
+                cumulative_duration = 0  # In seconds
+
+                for result in results:
+                    song = Song(*result)
+                    cumulative_duration += (
+                        song.duration_sec if song.duration_sec is not None else 0
+                    )
+
+                    if cumulative_duration >= target_duration_sec:
+                        break  # Stop if the target duration is reached
+
+                    selected_songs.append(song)
+
+                return selected_songs
+
             # First attempt with genre filtering
             results = execute_query(with_genre=True)
+            songs = select_songs_with_duration_check(results)
 
-            # If no results, try again without genre filtering
-            if not results:
+            # If no results or cumulative duration is insufficient, try without genre filtering
+            if (
+                not songs
+                or sum(song.duration_sec for song in songs) < target_duration_sec
+            ):
                 results = execute_query(with_genre=False)
-
-            # Convert results to Song objects
-            songs = [Song(*result) for result in results]
+                songs += select_songs_with_duration_check(results)
 
         except sqlite3.Error as e:
             print(f"Database error: {e}")
 
         finally:
-            # Ensure resources are cleaned up
             if cursor:
                 cursor.close()
             if connection:
                 connection.close()
 
-        return songs
+        return songs  # Return all selected songs up to the duration limit
