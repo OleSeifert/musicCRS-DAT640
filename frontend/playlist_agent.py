@@ -127,10 +127,11 @@ class PlaylistAgent(Agent):
         """Sends the agent's goodbye message."""
         utterance = AnnotatedUtterance(
             "It was nice talking to you. Bye",
-            # intent=self.stop_intent,
+            intent=self.stop_intent,
             participant=DialogueParticipant.AGENT,
         )
         self._dialogue_connector.register_agent_utterance(utterance)
+
 
     def separate_utterance(self, text: str) -> List[str]:
         """Separates the utterance into command and argument.

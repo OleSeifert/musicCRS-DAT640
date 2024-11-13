@@ -21,9 +21,9 @@ class AdvancedUserSimulator(User):
 
     def __init__(
         self,
-        profile: UserProfile,
         id,
         user_type=UserType.SIMULATOR,
+        profile: UserProfile = None
     ) -> None:
         """Initializes the advanced user simulator.
 
@@ -35,9 +35,11 @@ class AdvancedUserSimulator(User):
         super().__init__(id, user_type)
         self._num_songs = 0
         self.profile = profile
+        self.songs_to_add = self.profile.preferences
         self.turns = 0
-        self.max_turns = 10  # stopping criterion
+        self.max_turns = 20  # stopping criterion
         self._goal_met = False
+        self.last_command = None
 
     def _generate_response(self) -> AnnotatedUtterance:
         """Generates a response.
@@ -45,29 +47,38 @@ class AdvancedUserSimulator(User):
         Returns:
             Annotated utterance.
         """
-        if self._goal_met or self.turns > = self.max_turns:
-            return AnnotatedUtterance("/exit", participant=DialogueParticipant.USER)
 
         # Randomly select a command
-        command = self._choose_command()
+        utterance = self._choose_command()
+
 
         self.turns += 1
-        return AnnotatedUtterance(command, participant=DialogueParticipant.USER)
+        return AnnotatedUtterance(utterance, participant=DialogueParticipant.USER)
 
     def _choose_command(self) -> str:
         options = ["/add", "/view", "/recommend"] # TODO: Add questions
 
+        if self.turns >= self.max_turns or self._num_songs == 10:
+            return "/exit"
+
+        if not self.songs_to_add:
+            options.remove("/add")
+
         choice = random.choice(options)
+        self.last_command = choice
 
         if choice == "/add":
-            pass
+            self.last_command = "/add " + random.choice(self.songs_to_add)
+            return "/add " + random.choice(self.songs_to_add)
+
         elif choice == "/view":
-            pass
+            return "/view"
         elif choice == "/recommend":
-            pass
+            return "/recommend"
         # TODO: Add questions also here
 
-        return "/exit"
+
+
 
     def receive_utterance(self, utterance: Utterance) -> None:
         """Gets called every time there is a new agent utterance.
@@ -75,10 +86,21 @@ class AdvancedUserSimulator(User):
         Args:
             utterance: Agent utterance.
         """
-        # TODO: Check if it is answering to the view
-        # * count number of songs
-        # * save it somewhere
+        if self.last_command.startswith("/add"):
+            if "Please select one in the suggestions list" in utterance.text:
+                #call endpoint
+            else:
+                song = self.last_command.split(" ")[1]
+                self.songs_to_add.remove(song)
+        elif self.last_command == "/view":
+            self._num_songs = len(utterance.text.split("//"))
+        elif self.last_command == "/recommend":
+            #call endpoint to select 1 song
+
+
+
         # ? How can we detect if playlist is in line with the goal??
         # TODO: Detect if multiple songs are recommended
 
-        pass
+        response = self._generate_response()
+        self._dialogue_connector.register_user_utterance(response)
