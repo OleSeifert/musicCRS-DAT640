@@ -37,7 +37,7 @@ class AdvancedUserSimulator(User):
         self.songs_to_add = self.profile.preferences
         self.turns = 0
         self.max_turns = 20  # stopping criterion
-        self._goal_met = False
+        self.goal_songs_number = self.profile.goal
         self.last_command = ""
 
     def _generate_response(self) -> AnnotatedUtterance:
@@ -69,7 +69,13 @@ class AdvancedUserSimulator(User):
             "Q3",
         ]
 
-        if self.turns >= self.max_turns or self._num_songs == 10:
+        if self.last_command == "/view":
+            options.remove("/view")
+        else:
+            if "/view" not in options:
+                options.append("/view")
+
+        if self.turns >= self.max_turns or self._num_songs == self.goal_songs_number:
             self.last_command = "/exit"
             return "/exit"
 
@@ -124,19 +130,19 @@ class AdvancedUserSimulator(User):
                 "http://localhost:5002/move_recommendation",
                 json={"artists": self.profile.prefered_artists},
             )
-            print(
-                "***Simulating User choosing one song from the recommendations list***"
-            )
+
 
             if response.status_code == 200:
                 songs = response.json().get("songs", "")
                 for song in songs:
                     print(
+                        "***Simulating User choosing one song from the recommendations list***"
+                    )
+                    print(
                         f"***Song {song} added to playlist based on user preferences***"
                     )
-
-        # ? How can we detect if playlist is in line with the goal??
-        # TODO: Detect if multiple songs are recommended
+            else:
+                print("***No recommendations available***")
 
         response = self._generate_response()
         self._dialogue_connector.register_user_utterance(response)

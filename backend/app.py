@@ -519,6 +519,9 @@ def move_recommendation():
     if not isinstance(artists, list) or not all(isinstance(artist, str) for artist in artists):
         return jsonify({"error": "Invalid artists list"}), 400
 
+    if not recommendations:
+        return jsonify({"error": "No recommendations available"}), 400
+
     # Find a matching recommendation
     matches = [rec for rec in recommendations.songs if rec.artist_0 in artists]
 
