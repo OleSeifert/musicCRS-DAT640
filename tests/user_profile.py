@@ -1,6 +1,4 @@
-"""This module contains the UserProfile class for the tests of the
-playlist_agent.
-"""
+"""The UserProfile for the simulation of the playlist_agent."""
 
 from dataclasses import dataclass
 from typing import List
@@ -15,11 +13,11 @@ class UserProfile:
         preferences: List of user preferred Song by Artist.
         prefered_artists: List of user preferred artists.
         prefered_songs: List of user preferred songs.
-        goal: User goal. Defaults to "Create a playlist".
+        goal: User goal. In our case a number of songs to add to the playlist.
     """
 
     id: str
     preferences: List[str]
     prefered_artists: List[str]
     prefered_songs: List[str]
-    goal: str = "Create a playlist"
+    goal: int
