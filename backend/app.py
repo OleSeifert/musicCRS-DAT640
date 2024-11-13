@@ -9,6 +9,7 @@ To run execute the following command:
 """
 
 import os
+from typing import List, Tuple, Union
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -255,6 +256,8 @@ def add_suggestions():
 def create_entire_playlist():
     """Adds multiple songs to the playlist."""
     data = request.get_json()
+
+    # Extract the parameters from the request
     valence = mappings.VALENCE_MAPPING[post_processing.extract_valence(data)]
     energy = mappings.ENERGY_MAPPING[post_processing.extract_energy(data)]
     danceability = mappings.DANCEABILITY_MAPPING[
@@ -262,12 +265,13 @@ def create_entire_playlist():
     ]
     tempo = mappings.TEMPO_MAPPING[post_processing.extract_tempo(data)]
     genres = post_processing.extract_genres(data)
-    number_of_songs = 10
+    duration = post_processing.extract_duration(data)
 
+    # Query the database
     db_manager = database_manager.DatabaseManager(DB_PATH)
     playlist.clear()
     playlist.songs = db_manager.query_songs_for_playlist_generation(
-        tempo, danceability, valence, energy, genres, number_of_songs
+        tempo, danceability, valence, energy, genres, duration
     )
 
     results = []
@@ -394,7 +398,17 @@ def clear_playlist():
     return jsonify({"message": "All songs have been removed from the playlist"}), 200
 
 
-def parse_song_string(song_str):
+def parse_song_string(song_str: str) -> Tuple[Union[str, None], List[str]]:
+    """Parses a song string to extract the track name and artists.
+
+    Args:
+        song_str: String of the song with the format
+          "<song_name> by <artist_name_1>, <artist_name_2>, ..."
+
+    Returns:
+        A tuple consisting of the track name and a list of artists. Or None if
+        the song string is not in the correct format.
+    """
     if " by " not in song_str:
         return None, []
     track_name, artists_str = song_str.split(" by ", 1)
@@ -404,6 +418,7 @@ def parse_song_string(song_str):
 
 @app.route("/add_to_playlist", methods=["POST"])
 def add_to_playlist():
+    """Adds a song from the suggestions to the playlist."""
     data = request.get_json()
     song_str = data.get("song")
 
@@ -429,6 +444,7 @@ def add_to_playlist():
 
 @app.route("/add_recommendation_to_playlist", methods=["POST"])
 def add_recommendation_to_playlist():
+    """Adds songs in the recommendations to the playlist."""
     data = request.get_json()
     songs_data = data.get("songs")  # Lista di canzoni da aggiungere alla playlist
 

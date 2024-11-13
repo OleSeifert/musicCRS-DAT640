@@ -203,11 +203,14 @@ def get_playlist_songs(user_input: str) -> str:
 
                     - **valence**: Indicates the positivity of a track. Use "low" for sad or somber music, "mid" for neutral mood, and "high" for happy or upbeat tracks.
 
+                    - **min**: This is an estimated playlist length in minutes, based on the description or activity implied in the user request. If the description suggests an activity with a typical duration (e.g., "gym session," "focus music"), use an appropriate time, such as 60 minutes for a gym session. If no specific activity is implied, set a minimum playlist length of at least 20 minutes to create a meaningful listening experience.
+
                     ### Instructions:
                     1. Interpret the description to infer the genre and characteristics of the music the user is looking for.
                     2. Populate only the fields most relevant to the description:
                         - **genre**: List of genres (e.g., ["pop", "rock"]). If appropriate, include multiple genres.
                         - **danceability, energy, tempo, valence**: Each a string ("low", "mid", or "high") to represent the music characteristics as described above.
+                        - **min**: Estimated playlist duration in minutes, based on the activity or general context of the playlist request.
                     3. Pay close attention to keywords in the description to interpret energy accurately, especially for mood-specific requests like "melancholic," "chill," or "calm."
                     4. Provide data for each relevant field based on the theme of the playlist description.
 
@@ -219,7 +222,8 @@ def get_playlist_songs(user_input: str) -> str:
                         "danceability": "low | mid | high",
                         "energy": "low | mid | high",
                         "tempo": "low | mid | high",
-                        "valence": "low | mid | high"
+                        "valence": "low | mid | high",
+                        "min": estimated_minutes
                     }}
 
                     Include only the fields you consider important for the given playlist description.
@@ -236,7 +240,8 @@ def get_playlist_songs(user_input: str) -> str:
                         "danceability": "high",
                         "energy": "high",
                         "tempo": "high",
-                        "valence": "high"
+                        "valence": "high",
+                        "min": 60
                     }}
 
                     #### Example 2
@@ -249,7 +254,8 @@ def get_playlist_songs(user_input: str) -> str:
                         "genre": ["acoustic", "folk"],
                         "energy": "low",
                         "tempo": "low",
-                        "valence": "mid"
+                        "valence": "mid",
+                        "min": 25
                     }}
 
                     #### Example 3
@@ -260,7 +266,8 @@ def get_playlist_songs(user_input: str) -> str:
 
                     {{
                         "genre": ["instrumental"],
-                        "speechiness": "low"
+                        "speechiness": "low",
+                        "min": 35
                     }}
 
                     #### Example 4
@@ -272,7 +279,8 @@ def get_playlist_songs(user_input: str) -> str:
                         "genre": ["ambient", "folk", "indie"],
                         "energy": "low",
                         "tempo": "low",
-                        "valence": "low"
+                        "valence": "low",
+                        "min": 30
                     }}
 
                     Respond only with the JSON output in the specified format.
@@ -324,6 +332,7 @@ def interact_with_playlist_agent(user_preferences: str) -> str:
                     3. **User Profile**:
                         Use the provided user profile to inform your actions. Prioritize their preferred genres and liked artists, avoid disliked artists, and work towards achieving the user’s specified goal.
 
+                    REMEMBER TO
                     ### Example User Profile:
                     UserProfile(id='1', preferences=['rock', 'pop', 'jazz'], liked_artists=['Taylor Swift', 'Ariana Grande'], disliked_artists=['Justin Bieber'], goal='Create a playlist')
 
@@ -434,17 +443,8 @@ class NLUProcessor:
 
 # TODO: Remove the following code
 if __name__ == "__main__":
-    user = UserProfile(
-        "1",
-        [
-            "Cruel Summer by Taylor Swift",
-            "Africa by Toto",
-            "Let it Be",
-            "Shake It Off by Taylor Swift",
-            "Thriller by Michael Jackson",
-        ],
-        ["Michael Jackson", "Queen"],
-        ["Taylor Swift", "Adele"],
+
+    response_test = get_playlist_songs(
+        "melancholic songs for a quick stroll around the park"
     )
-    response_test = interact_with_playlist_agent(str(user))
     print(response_test)
