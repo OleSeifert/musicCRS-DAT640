@@ -9,6 +9,7 @@ To run execute the following command:
 """
 
 import os
+import random
 from typing import List, Tuple, Union
 
 from flask import Flask, jsonify, request
@@ -27,9 +28,6 @@ CORS(app)
 
 # Populate playlist initially with some songs
 playlist = Playlist("My Playlist")
-playlist.add_song(Song(track_name="I Won't Give Up", artist_0="Jason Mraz"))
-playlist.add_song(Song(track_name="93 Million Miles", artist_0="Jason Mraz"))
-playlist.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
 
 suggestions = Playlist("Suggestions")
 # suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
@@ -489,6 +487,55 @@ def add_recommendation_to_playlist():
         ),
         200,
     )
+
+@app.route('/move_first_to_playlist', methods=['GET'])
+def move_first_to_playlist():
+    """
+    Moves the first suggestion to the playlist.
+    """
+    if not suggestions:
+        return jsonify({"error": "No suggestions available"}), 400
+
+    # Pop the first song from suggestions and add it to the playlist
+    song = suggestions.songs.pop(0)
+    playlist.songs.append(song)
+
+    return jsonify({
+        "message": f"'{song}' moved to playlist"
+    }), 200
+
+
+@app.route('/move_recommendation', methods=['POST'])
+def move_recommendation():
+    """
+    Moves a song from recommendations to the playlist based on artist match.
+    """
+    # Get the list of artists from the request body
+    data = request.json
+    if not data or 'artists' not in data:
+        return jsonify({"error": "Please provide a list of artists"}), 400
+
+    artists = data['artists']
+    if not isinstance(artists, list) or not all(isinstance(artist, str) for artist in artists):
+        return jsonify({"error": "Invalid artists list"}), 400
+
+    # Find a matching recommendation
+    matches = [rec for rec in recommendations.songs if rec.artist_0 in artists]
+
+
+    # If no match, pick a random recommendation
+    if not matches:
+        matches = [random.choice(recommendations.songs)]
+
+    # Move the selected recommendation to the playlist
+    for match in matches:
+        playlist.songs.append(match)
+
+    matches_str = [str(match) for match in matches]
+
+    return jsonify({
+        "songs": matches_str,
+    }), 200
 
 
 if __name__ == "__main__":

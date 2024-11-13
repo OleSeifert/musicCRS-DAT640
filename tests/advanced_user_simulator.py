@@ -2,6 +2,7 @@
 
 import random
 
+import requests
 from dialoguekit.core.annotated_utterance import AnnotatedUtterance
 from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.participant import DialogueParticipant
@@ -53,10 +54,11 @@ class AdvancedUserSimulator(User):
         return AnnotatedUtterance(utterance, participant=DialogueParticipant.USER)
 
     def _choose_command(self) -> str:
-        options = ["/add"]
-        # options = ["/add", "/view", "/recommend"]  # TODO: Add questions
+        #options = ["/add"]
+        options = ["/add", "/view", "/recommend"]  # TODO: Add questions
 
         if self.turns >= self.max_turns or self._num_songs == 10:
+            self.last_command = "/exit"
             return "/exit"
 
         if not self.songs_to_add:
@@ -84,19 +86,28 @@ class AdvancedUserSimulator(User):
         if self.last_command.startswith("/add"):
             if "Please select one in the suggestions list" in utterance.text:
                 # call endpoint
-                pass
-            else:
-                song = self.last_command.split(" ", maxsplit=1)[1]
-                print(song)
-                print(self.songs_to_add)
-                if song in self.songs_to_add:
-                    self.songs_to_add.remove(song)
-                    print(self.songs_to_add)
+                response = requests.get("http://localhost:5002/move_first_to_playlist")
+                print("***Simulating User choosing one song from the suggestions list***")
+                if response.status_code == 200:
+                    print("***Song added to playlist***")
+
+
+            song = self.last_command.split(" ", maxsplit=1)[1]
+            if song in self.songs_to_add:
+                self.songs_to_add.remove(song)
+
         elif self.last_command == "/view":
             self._num_songs = len(utterance.text.split("//"))
         elif self.last_command == "/recommend":
             # call endpoint to select 1 song
-            pass
+            response = requests.post("http://localhost:5002/move_recommendation", json = {"artists": self.profile.prefered_artists})
+            print("***Simulating User choosing one song from the recommendations list***")
+
+            if response.status_code == 200:
+                songs = response.json().get('songs', '')
+                for song in songs:
+                    print(f"***Song {song} added to playlist based on user preferences***")
+
 
         # ? How can we detect if playlist is in line with the goal??
         # TODO: Detect if multiple songs are recommended
