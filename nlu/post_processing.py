@@ -82,6 +82,7 @@ def post_process_response(response: str) -> Dict[str, Any]:
 
     return cleaned_data
 
+
 def extract_intent(response: Dict[str, Any]) -> str:
     """Extracts the intent from the NLU response.
 
@@ -93,6 +94,7 @@ def extract_intent(response: Dict[str, Any]) -> str:
     """
     return response.get("intent", "")
 
+
 def extract_album_name(response: Dict[str, Any]) -> str:
     """Extracts the album name from the NLU response.
 
@@ -103,6 +105,7 @@ def extract_album_name(response: Dict[str, Any]) -> str:
         The album name extracted from the response.
     """
     return response.get("entities", {}).get("album", "")
+
 
 def extract_artist(response: Dict[str, Any]) -> str:
     """Extracts the artist name from the NLU response.
@@ -127,6 +130,7 @@ def extract_song(response: Dict[str, Any]) -> str:
     """
     return response.get("entities", {}).get("song", "")
 
+
 def extract_position(response: Dict[str, Any]) -> str:
     """Extracts the position from the NLU response.
 
@@ -138,6 +142,7 @@ def extract_position(response: Dict[str, Any]) -> str:
     """
     return response.get("entities", {}).get("position", "")
 
+
 def vector_position(position: str) -> list:
     """Converts the position string to a list of integers.
 
@@ -147,9 +152,10 @@ def vector_position(position: str) -> list:
     Returns:
         A list of integers representing the position.
     """
-    if position!= "":
+    if position != "":
         return [int(x) for x in position[1:-1].split(",")]
     return []
+
 
 def extract_description(response: Dict[str, Any]) -> str:
     """Extracts the position from the NLU response.
@@ -187,6 +193,7 @@ def extract_danceability(response: Dict[str, Any]) -> str:
     """
     return response.get("danceability", "")
 
+
 def extract_energy(response: Dict[str, Any]) -> str:
     """Extracts the energy from the NLU response.
 
@@ -210,6 +217,7 @@ def extract_tempo(response: Dict[str, Any]) -> str:
     """
     return response.get("tempo", "")
 
+
 def extract_valence(response: Dict[str, Any]) -> str:
     """Extracts the valence from the NLU response.
 
@@ -222,6 +230,13 @@ def extract_valence(response: Dict[str, Any]) -> str:
     return response.get("valence", "")
 
 
+def extract_duration(response: Dict[str, Any]) -> int:
+    """Extracts the duration from the NLU response.
 
+    Args:
+        response: The cleaned JSON data from the NLU model.
 
-
+    Returns:
+        The duration extracted from the response.
+    """
+    return response.get("min", 20)
