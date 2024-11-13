@@ -1,6 +1,7 @@
 """Advanced user simulator that simply requests songs."""
 
 import random
+
 from dialoguekit.core.annotated_utterance import AnnotatedUtterance
 from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.participant import DialogueParticipant
@@ -20,10 +21,7 @@ class AdvancedUserSimulator(User):
     """
 
     def __init__(
-        self,
-        id,
-        user_type=UserType.SIMULATOR,
-        profile: UserProfile = None
+        self, id, user_type=UserType.SIMULATOR, profile: UserProfile = None
     ) -> None:
         """Initializes the advanced user simulator.
 
@@ -39,7 +37,7 @@ class AdvancedUserSimulator(User):
         self.turns = 0
         self.max_turns = 20  # stopping criterion
         self._goal_met = False
-        self.last_command = None
+        self.last_command = ""
 
     def _generate_response(self) -> AnnotatedUtterance:
         """Generates a response.
@@ -51,12 +49,12 @@ class AdvancedUserSimulator(User):
         # Randomly select a command
         utterance = self._choose_command()
 
-
         self.turns += 1
         return AnnotatedUtterance(utterance, participant=DialogueParticipant.USER)
 
     def _choose_command(self) -> str:
-        options = ["/add", "/view", "/recommend"] # TODO: Add questions
+        options = ["/add"]
+        # options = ["/add", "/view", "/recommend"]  # TODO: Add questions
 
         if self.turns >= self.max_turns or self._num_songs == 10:
             return "/exit"
@@ -77,9 +75,6 @@ class AdvancedUserSimulator(User):
             return "/recommend"
         # TODO: Add questions also here
 
-
-
-
     def receive_utterance(self, utterance: Utterance) -> None:
         """Gets called every time there is a new agent utterance.
 
@@ -88,16 +83,20 @@ class AdvancedUserSimulator(User):
         """
         if self.last_command.startswith("/add"):
             if "Please select one in the suggestions list" in utterance.text:
-                #call endpoint
+                # call endpoint
+                pass
             else:
-                song = self.last_command.split(" ")[1]
-                self.songs_to_add.remove(song)
+                song = self.last_command.split(" ", maxsplit=1)[1]
+                print(song)
+                print(self.songs_to_add)
+                if song in self.songs_to_add:
+                    self.songs_to_add.remove(song)
+                    print(self.songs_to_add)
         elif self.last_command == "/view":
             self._num_songs = len(utterance.text.split("//"))
         elif self.last_command == "/recommend":
-            #call endpoint to select 1 song
-
-
+            # call endpoint to select 1 song
+            pass
 
         # ? How can we detect if playlist is in line with the goal??
         # TODO: Detect if multiple songs are recommended
