@@ -1,5 +1,8 @@
 # Python Version
-3.9.X
+
+![Static Badge](https://img.shields.io/badge/code_style-black-black)
+![Static Badge](https://img.shields.io/badge/python-3.9-blue)
+
 
 Dataset: https://www.kaggle.com/datasets/amitanshjoshi/spotify-1million-tracks/data
 
