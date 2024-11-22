@@ -4,9 +4,9 @@ import argparse
 import logging
 
 from frontend import playlist_agent  # TODO: update accordingly
+from tests.advanced_user_simulator import AdvancedUserSimulator
 from tests.naive_user_simulator import NaiveUserSimulator
 from tests.simulation_platform import SimulationPlatform
-from tests.advanced_user_simulator import AdvancedUserSimulator
 from tests.user_profile import UserProfile
 
 
@@ -32,26 +32,39 @@ if __name__ == "__main__":
 
     User1 = UserProfile(
         id="User1",
-        preferences=["Vogue by Madonna", "cruel summer by Taylor Swift", "Lover by Taylor Swift"],
+        preferences=[
+            "Vogue by Madonna",
+            "cruel summer by Taylor Swift",
+            "Lover by Taylor Swift",
+        ],
         prefered_artists=["Madonna", "Taylor Swift"],
         prefered_songs=["Vogue", "Cruel Summer", "Lover"],
-        goal=15
+        goal=15,
     )
 
     User2 = UserProfile(
         id="User2",
-        preferences=["Let Down by Radiohead", "Karma Police by Radiohead", "With Or Without You by U2", "Africa by TOTO"],
+        preferences=[
+            "Let Down by Radiohead",
+            "Karma Police by Radiohead",
+            "With Or Without You by U2",
+            "Africa by TOTO",
+        ],
         prefered_artists=["Radiohead", "TOTO", "U2"],
         prefered_songs=["Let Down", "Karma Police", "Africa", "With Or Without You"],
-        goal=10
+        goal=10,
     )
 
     User3 = UserProfile(
         id="User3",
-        preferences=["Thriller by Michael Jackson", "Billie Jean by Micheal Jackson", "home by depeche mode"],
+        preferences=[
+            "Thriller by Michael Jackson",
+            "Billie Jean by Micheal Jackson",
+            "home by depeche mode",
+        ],
         prefered_artists=["Michael Jackson", "depeche mode"],
         prefered_songs=["Thriller", "Billie Jean", "home"],
-        goal=7
+        goal=7,
     )
 
     for i in range(1, args.num_simulations + 1):
@@ -60,8 +73,7 @@ if __name__ == "__main__":
         platform.start()
         print(f"\n--- Staring simulation {i} ---\n")
 
-        platform.connect(f"SimulatedUser{i}", AdvancedUserSimulator, {"profile": User3})
-
+        platform.connect(f"SimulatedUser{i}", AdvancedUserSimulator, {"profile": User1})
 
         platform.disconnect(f"SimulatedUser{i}")
         print(f"\n--- Finished simulation {i} ---\n")
