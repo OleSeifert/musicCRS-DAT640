@@ -1,0 +1,7 @@
+dialoguekit==0.0.9.dev2
+flask
+flask-cors
+pandas
+scikit-learn
+ollama
+requests
