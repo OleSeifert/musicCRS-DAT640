@@ -4,10 +4,10 @@ import argparse
 import logging
 
 from frontend import playlist_agent  # TODO: update accordingly
-from tests.advanced_user_simulator import AdvancedUserSimulator
-from tests.naive_user_simulator import NaiveUserSimulator
-from tests.simulation_platform import SimulationPlatform
-from tests.user_profile import UserProfile
+from user_simulation.advanced_user_simulator import AdvancedUserSimulator
+from user_simulation.naive_user_simulator import NaiveUserSimulator
+from user_simulation.simulation_platform import SimulationPlatform
+from user_simulation.user_profile import UserProfile
 
 
 def parse_args() -> argparse.Namespace:
