@@ -7,8 +7,7 @@ from dialoguekit.core.annotated_utterance import AnnotatedUtterance
 from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.participant import DialogueParticipant
 from dialoguekit.participant.user import User, UserType
-
-from tests.user_profile import UserProfile
+from user_simulation.user_profile import UserProfile
 
 
 class AdvancedUserSimulator(User):
@@ -130,7 +129,6 @@ class AdvancedUserSimulator(User):
                 "http://localhost:5002/move_recommendation",
                 json={"artists": self.profile.prefered_artists},
             )
-
 
             if response.status_code == 200:
                 songs = response.json().get("songs", "")

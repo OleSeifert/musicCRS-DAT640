@@ -1,0 +1,22 @@
+[project]
+name = "Music-Recommender-System"
+version = "0.1.0"
+description = "A chatbot that recommends music based on user preferences."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "flask-cors>=5.0.0",
+    "flask>=3.1.0",
+    "ollama>=0.4.2",
+    "requests>=2.32.3",
+    "pandas>=2.2.3",
+    "scikit-learn>=1.5.2",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = "musicCRS"

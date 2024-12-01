@@ -10,8 +10,6 @@ from typing import Any, Dict, Union
 
 import ollama
 
-from tests.user_profile import UserProfile
-
 from . import post_processing
 
 
