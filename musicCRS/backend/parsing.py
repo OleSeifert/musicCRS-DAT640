@@ -166,6 +166,9 @@ def helper_parse_release_date(date_str: str) -> Tuple[str, int]:
 
     Returns:
         A tuple (month, year) of the release date.
+
+    Raises:
+        ValueError: If the date string is not in the correct format.
     """
     date_format = "%Y-%m-%d %H:%M:%S %Z"
 
