@@ -441,7 +441,6 @@ class NLUProcessor:
 
 # TODO: Remove the following code
 if __name__ == "__main__":
-
     response_test = get_playlist_songs(
         "melancholic songs for a quick stroll around the park"
     )
