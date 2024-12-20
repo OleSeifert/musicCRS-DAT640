@@ -255,4 +255,3 @@ def test_helper_convert_seconds_to_minutes(
     """Tests the helper function for converting seconds to minutes."""
     minutes = parsing.helper_convert_seconds_to_minutes(seconds)
     assert minutes == expected_minutes
-    assert minutes == expected_minutes
