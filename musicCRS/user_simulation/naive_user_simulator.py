@@ -5,7 +5,7 @@ from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.participant import DialogueParticipant
 from dialoguekit.participant.user import User, UserType
 
-_SONGS = [f"song{i} by artist{i}" for i in range(1,6)]
+_SONGS = [f"song{i} by artist{i}" for i in range(1, 6)]
 _COMMAND = "/add [song]"
 
 
@@ -34,9 +34,8 @@ class NaiveUserSimulator(User):
             self._num_songs += 1
             utterance = _COMMAND.replace("[song]", _SONGS[self._num_songs - 1])
         else:
-            utterance = "/quit"     
-        return AnnotatedUtterance(utterance,
-                                  participant=DialogueParticipant.USER)
+            utterance = "/quit"
+        return AnnotatedUtterance(utterance, participant=DialogueParticipant.USER)
 
     def receive_utterance(self, utterance: Utterance) -> None:
         """Gets called every time there is a new agent utterance.

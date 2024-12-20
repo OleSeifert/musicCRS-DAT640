@@ -3,11 +3,11 @@
 import argparse
 import logging
 
-from frontend import playlist_agent  # TODO: update accordingly
 from user_simulation.advanced_user_simulator import AdvancedUserSimulator
-from user_simulation.naive_user_simulator import NaiveUserSimulator
 from user_simulation.simulation_platform import SimulationPlatform
 from user_simulation.user_profile import UserProfile
+
+from musicCRS.backend import playlist_agent
 
 
 def parse_args() -> argparse.Namespace:

@@ -804,7 +804,7 @@ class PlaylistAgent(Agent):
                 )
                 if resp.status_code == 201:
                     response = AnnotatedUtterance(
-                        f"I created the playlist that best fits your description",
+                        "I created the playlist that best fits your description",
                         participant=DialogueParticipant.AGENT,
                     )
                 else:
