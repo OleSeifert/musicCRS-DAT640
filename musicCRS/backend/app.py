@@ -1,11 +1,11 @@
-"""Creates a Flask app that fetches the songs from the playlist file.
+"""Creates a Flask app that provides the backend for the musicCRS application.
 
-The app has a single endpoint that returns the songs from the playlist file and
-runs on port 5002.
+The app coordinates the current playlist, as well as the endpoints of the app
+and the reloading for the frontend.
 
-To run execute the following command:
+To run execute the following command from the root directory:
 
-`python app.py`
+`python -m musicCrs.backend.app`
 """
 
 import os

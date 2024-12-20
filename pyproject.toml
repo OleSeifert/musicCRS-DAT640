@@ -6,4 +6,4 @@ readme = "README.md"
 requires-python = ">=3.9"
 
 [tool.pytest.ini_options]
-pythonpath = "musicCRS"
+pythonpath = "./"

@@ -3,7 +3,8 @@
 from typing import Tuple
 
 import pytest
-from backend import parsing
+
+from musicCRS.backend import parsing
 
 
 @pytest.mark.parametrize(
@@ -253,4 +254,5 @@ def test_helper_convert_seconds_to_minutes(
 ) -> None:
     """Tests the helper function for converting seconds to minutes."""
     minutes = parsing.helper_convert_seconds_to_minutes(seconds)
+    assert minutes == expected_minutes
     assert minutes == expected_minutes
