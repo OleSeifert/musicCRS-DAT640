@@ -1,0 +1,6 @@
+[coverage:run]
+branch = True
+source = musicCRS
+omit =
+    */__pycache__/*
+    musicCRS/backend/run_agent.py

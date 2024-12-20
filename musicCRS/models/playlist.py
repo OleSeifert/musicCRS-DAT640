@@ -1,6 +1,6 @@
 """Module for the Playlist class."""
 
-from models.song import Song
+from musicCRS.models.song import Song
 
 
 class Playlist:
@@ -63,13 +63,23 @@ class Playlist:
                     return 0
                 else:
                     # Controllo opzionale degli artisti se specificati
-                    song_artists = [song.artist_0, song.artist_1, song.artist_2, song.artist_3, song.artist_4]
-                    song_artists = [artist for artist in song_artists if artist]  # Rimuove valori None
+                    song_artists = [
+                        song.artist_0,
+                        song.artist_1,
+                        song.artist_2,
+                        song.artist_3,
+                        song.artist_4,
+                    ]
+                    song_artists = [
+                        artist for artist in song_artists if artist
+                    ]  # Rimuove valori None
 
                     if song_artists == artists:
                         # Rimuove la canzone solo se sia il nome della traccia sia gli artisti corrispondono
                         self.songs.remove(song)
-                        print(f"Removed '{track_name}' by {', '.join(artists)} from the playlist.")
+                        print(
+                            f"Removed '{track_name}' by {', '.join(artists)} from the playlist."
+                        )
                         return 0
         return -1
 
@@ -95,6 +105,7 @@ class Playlist:
             print(f"Removed '{song.track_name}' from the playlist.")
 
         return 0
+
     def find_song(self, track_name: str, artists: list = None) -> Song:
         """Finds a song in the playlist based on track name and optionally artists.
 
@@ -109,7 +120,13 @@ class Playlist:
             # Controlla il nome della traccia
             if song.track_name == track_name:
                 # Se gli artisti sono specificati, verifica che coincidano
-                song_artists = [song.artist_0, song.artist_1, song.artist_2, song.artist_3, song.artist_4]
+                song_artists = [
+                    song.artist_0,
+                    song.artist_1,
+                    song.artist_2,
+                    song.artist_3,
+                    song.artist_4,
+                ]
                 song_artists = [artist for artist in song_artists if artist]
 
                 if artists is None or song_artists == artists:

@@ -4,7 +4,7 @@ import os
 import sqlite3
 from typing import List, Tuple, Union
 
-from models.song import Song
+from musicCRS.models.song import Song
 
 
 class DatabaseManager:

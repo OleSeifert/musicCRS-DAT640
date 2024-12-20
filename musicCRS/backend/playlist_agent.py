@@ -2,7 +2,6 @@
 
 import os
 import random
-import sqlite3
 from typing import List, Tuple, Union
 
 import requests
@@ -12,9 +11,9 @@ from dialoguekit.core.utterance import Utterance
 from dialoguekit.participant.agent import Agent
 from dialoguekit.participant.participant import DialogueParticipant
 
-from backend import parsing
-from data.database_manager import DatabaseManager
-from nlu import nlu, post_processing
+from musicCRS.backend import parsing
+from musicCRS.data.database_manager import DatabaseManager
+from musicCRS.nlu import nlu, post_processing
 
 
 class PlaylistAgent(Agent):

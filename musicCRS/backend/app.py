@@ -15,11 +15,11 @@ from typing import List, Tuple, Union
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
-from data import database_manager
-from data import recommendations as rec
-from models.playlist import Playlist
-from models.song import Song
-from nlu import mappings, post_processing
+from musicCRS.data import database_manager
+from musicCRS.data import recommendations as rec
+from musicCRS.models.playlist import Playlist
+from musicCRS.models.song import Song
+from musicCRS.nlu import mappings, post_processing
 
 DB_PATH = os.path.abspath("data/final_database.db")
 
@@ -488,7 +488,8 @@ def add_recommendation_to_playlist():
         200,
     )
 
-@app.route('/move_first_to_playlist', methods=['GET'])
+
+@app.route("/move_first_to_playlist", methods=["GET"])
 def move_first_to_playlist():
     """
     Moves the first suggestion to the playlist.
@@ -500,23 +501,23 @@ def move_first_to_playlist():
     song = suggestions.songs.pop(0)
     playlist.songs.append(song)
 
-    return jsonify({
-        "message": f"'{song}' moved to playlist"
-    }), 200
+    return jsonify({"message": f"'{song}' moved to playlist"}), 200
 
 
-@app.route('/move_recommendation', methods=['POST'])
+@app.route("/move_recommendation", methods=["POST"])
 def move_recommendation():
     """
     Moves a song from recommendations to the playlist based on artist match.
     """
     # Get the list of artists from the request body
     data = request.json
-    if not data or 'artists' not in data:
+    if not data or "artists" not in data:
         return jsonify({"error": "Please provide a list of artists"}), 400
 
-    artists = data['artists']
-    if not isinstance(artists, list) or not all(isinstance(artist, str) for artist in artists):
+    artists = data["artists"]
+    if not isinstance(artists, list) or not all(
+        isinstance(artist, str) for artist in artists
+    ):
         return jsonify({"error": "Invalid artists list"}), 400
 
     if not recommendations:
@@ -524,7 +525,6 @@ def move_recommendation():
 
     # Find a matching recommendation
     matches = [rec for rec in recommendations.songs if rec.artist_0 in artists]
-
 
     # If no match, pick a random recommendation
     if not matches:
@@ -536,9 +536,14 @@ def move_recommendation():
 
     matches_str = [str(match) for match in matches]
 
-    return jsonify({
-        "songs": matches_str,
-    }), 200
+    return (
+        jsonify(
+            {
+                "songs": matches_str,
+            }
+        ),
+        200,
+    )
 
 
 if __name__ == "__main__":
