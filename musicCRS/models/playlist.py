@@ -1,5 +1,7 @@
 """Module for the Playlist class."""
 
+from typing import Union
+
 from musicCRS.models.song import Song
 
 
@@ -14,7 +16,7 @@ class Playlist:
     def __init__(self, name: str) -> None:
         """Initialize the playlist with a name and an empty list of songs."""
         self.name = name
-        self.songs = []
+        self.songs: list[Song] = []
 
     def add_song(self, song: Song) -> int:
         """Adds a song to the playlist.
@@ -41,7 +43,7 @@ class Playlist:
             print("Error: Only Song objects can be added.")
             return -2
 
-    def remove_song(self, track_name: str, artists: list = None) -> int:
+    def remove_song(self, track_name: str, artists: Union[list, None] = None) -> int:
         """Removes a song from the playlist.
 
         Args:
@@ -56,7 +58,7 @@ class Playlist:
         for song in self.songs:
             # Controlla se il nome della traccia coincide
             if song.track_name == track_name:
-                if artists is None:
+                if artists == []:
                     # Rimuove la canzone basandosi solo sul nome della traccia se gli artisti non sono specificati
                     self.songs.remove(song)
                     print(f"Removed '{track_name}' from the playlist.")
@@ -106,7 +108,9 @@ class Playlist:
 
         return 0
 
-    def find_song(self, track_name: str, artists: list = None) -> Song:
+    def find_song(
+        self, track_name: str, artists: Union[list, None] = None
+    ) -> Union[Song, None]:
         """Finds a song in the playlist based on track name and optionally artists.
 
         Args:
@@ -129,7 +133,7 @@ class Playlist:
                 ]
                 song_artists = [artist for artist in song_artists if artist]
 
-                if artists is None or song_artists == artists:
+                if artists == [] or song_artists == artists:
                     return song  # Restituisce l'oggetto Song trovato
         return None
 
@@ -147,4 +151,5 @@ class Playlist:
     def clear(self) -> None:
         """Removes all songs from the playlist."""
         self.songs = []
+        print("All songs have been removed from the playlist.")
         print("All songs have been removed from the playlist.")

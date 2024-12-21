@@ -3,7 +3,8 @@
 from typing import Tuple
 
 import pytest
-from backend import parsing
+
+from musicCRS.backend import parsing
 
 
 @pytest.mark.parametrize(

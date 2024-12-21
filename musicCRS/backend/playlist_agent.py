@@ -480,7 +480,14 @@ class PlaylistAgent(Agent):
             song_title, artist = self.parse_command(
                 self.separate_utterance(utterance.text)[1]
             )
-            self.add_song(song_title, artist)
+            if song_title:
+                self.add_song(song_title, artist)
+            else:
+                response = AnnotatedUtterance(
+                    "Please provide a valid song title.",
+                    participant=DialogueParticipant.AGENT,
+                )
+                self._dialogue_connector.register_agent_utterance(response)
             self.suggest_command_not_utilized()
             return
 
