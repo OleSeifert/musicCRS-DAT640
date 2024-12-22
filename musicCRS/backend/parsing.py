@@ -2,7 +2,9 @@
 
 import datetime
 import re
-from typing import Tuple, Union
+from typing import List, Tuple, Union
+
+# **************** Extraction ****************
 
 
 def extract_album_from_question(text: str) -> Union[str, None]:
@@ -155,6 +157,9 @@ def extract_artist_for_most_popular_song(text: str) -> Union[str, None]:
     return None
 
 
+# **************** Date / Time ****************
+
+
 def helper_parse_release_date(date_str: str) -> Tuple[str, int]:
     """Parses the release date.
 
@@ -191,3 +196,24 @@ def helper_convert_seconds_to_minutes(seconds: float) -> float:
     """
     # Round to the second decimal place
     return round(seconds / 60, 2)
+
+
+# **************** Song Parsing ****************
+
+
+def parse_song_string(song_str: str) -> Tuple[Union[str, None], List[str]]:
+    """Parses a song string to extract the track name and artists.
+
+    Args:
+        song_str: String of the song with the format
+          "<song_name> by <artist_name_1>, <artist_name_2>, ..."
+
+    Returns:
+        A tuple consisting of the track name and a list of artists. Or None if
+        the song string is not in the correct format.
+    """
+    if " by " not in song_str:
+        return None, []
+    track_name, artists_str = song_str.split(" by ", 1)
+    artists = [artist.strip() for artist in artists_str.split(",")]
+    return track_name.strip(), artists

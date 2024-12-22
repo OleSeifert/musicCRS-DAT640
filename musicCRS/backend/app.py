@@ -5,36 +5,35 @@ and the reloading for the frontend.
 
 To run execute the following command from the root directory:
 
-`python -m musicCrs.backend.app`
+`python -m musicCRS.backend.app`
 """
 
 import os
 import random
-from typing import List, Tuple, Union
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
+from musicCRS.backend import parsing
 from musicCRS.data import database_manager
 from musicCRS.data import recommendations as rec
 from musicCRS.models.playlist import Playlist
 from musicCRS.models.song import Song
 from musicCRS.nlu import mappings, post_processing
 
+# **************** Setup ****************
+
 DB_PATH = os.path.abspath("data/final_database.db")
 
 app = Flask(__name__)
 CORS(app)
 
-# Populate playlist initially with some songs
+# Setup the lists for the playlist, suggestions, and recommendations
 playlist = Playlist("My Playlist")
-
 suggestions = Playlist("Suggestions")
-# suggestions.add_song(Song(track_name="Yesterday", artist_0="The Beatles"))
-# suggestions.add_song(Song(track_name="Hey Jude", artist_0="The Beatles"))
-
 recommendations = Playlist("Recommendations")
-# recommendations.add_song(Song(track_name="Let It Be", artist_0="The Beatles"))
+
+# **************** Playlist Endpoints ****************
 
 
 @app.route("/songs", methods=["GET"])
@@ -43,46 +42,6 @@ def get_songs():
     # Usa il metodo __str__ per ogni oggetto Song
     playlist_strings = [str(song) for song in playlist.songs]
     return jsonify(playlist_strings)
-
-
-@app.route("/suggestions", methods=["GET"])
-def get_suggestions():
-    """Returns the suggestions as strings with an indication if they are in the playlist."""
-
-    playlist_track_ids = {song.track_id for song in playlist.songs}
-
-    suggestions_data = []
-    for song in suggestions.songs:
-        suggestion_entry = {
-            "message": str(song),
-            "disabled": song.track_id
-            in playlist_track_ids,  # Disable the button if the song is in the playlist
-        }
-        suggestions_data.append(suggestion_entry)
-
-    return jsonify(suggestions_data), 200
-
-
-@app.route("/recommendations", methods=["GET"])
-def get_recommendations():
-    """Returns the recommendations as strings with an indication if they are in
-    the playlist.
-
-    It is called from the `index.html` file to update the recommendations list.
-    """
-
-    playlist_track_ids = {song.track_id for song in playlist.songs}
-
-    recommendations_data = []
-    for song in recommendations.songs:
-        recommendation_entry = {
-            "message": str(song),
-            "disabled": song.track_id
-            in playlist_track_ids,  # Disable the button if the song is in the playlist
-        }
-        recommendations_data.append(recommendation_entry)
-
-    return jsonify(recommendations_data), 200
 
 
 @app.route("/add_song", methods=["POST"])
@@ -162,6 +121,70 @@ def add_song():
         ),
         201,
     )
+
+
+@app.route("/create_playlist", methods=["POST"])
+def create_entire_playlist():
+    """Adds multiple songs to the playlist."""
+    data = request.get_json()
+
+    # Extract the parameters from the request
+    valence = mappings.VALENCE_MAPPING[post_processing.extract_valence(data)]
+    energy = mappings.ENERGY_MAPPING[post_processing.extract_energy(data)]
+    danceability = mappings.DANCEABILITY_MAPPING[
+        post_processing.extract_danceability(data)
+    ]
+    tempo = mappings.TEMPO_MAPPING[post_processing.extract_tempo(data)]
+    genres = post_processing.extract_genres(data)
+    duration = post_processing.extract_duration(data)
+
+    # Query the database
+    db_manager = database_manager.DatabaseManager(DB_PATH)
+    playlist.clear()
+    playlist.songs = db_manager.query_songs_for_playlist_generation(
+        tempo, danceability, valence, energy, genres, duration
+    )
+
+    results = []
+    return jsonify(results), 201
+
+
+@app.route("/songs_string", methods=["GET"])
+def get_songs_as_string():
+    """Returns all songs in a single string, separated by a delimiter."""
+    # Uses the __str__ method for each Song object
+    songs_string = " // ".join([str(song) for song in playlist.songs])
+    return songs_string, 200
+
+
+@app.route("/clear_playlist", methods=["DELETE"])
+def clear_playlist():
+    """Delete all songs from the playlist."""
+    playlist.clear()  # Clear the playlist
+    return jsonify({"message": "All songs have been removed from the playlist"}), 200
+
+
+# **************** Suggestion Endpoints ****************
+
+
+@app.route("/suggestions", methods=["GET"])
+def get_suggestions():
+    """Returns the suggestions as strings with an indication if they are in
+    the playlist.
+    """
+
+    playlist_track_ids = {song.track_id for song in playlist.songs}
+
+    suggestions_data = []
+    for song in suggestions.songs:
+        suggestion_entry = {
+            "message": str(song),
+            "disabled": song.track_id
+            in playlist_track_ids,  # Disable the button if the song is in the playlist
+        }
+        suggestions_data.append(suggestion_entry)
+
+    return jsonify(suggestions_data), 200
 
 
 @app.route("/add_suggestions", methods=["POST"])
@@ -250,177 +273,13 @@ def add_suggestions():
     return jsonify(results), 201
 
 
-@app.route("/create_playlist", methods=["POST"])
-def create_entire_playlist():
-    """Adds multiple songs to the playlist."""
-    data = request.get_json()
-
-    # Extract the parameters from the request
-    valence = mappings.VALENCE_MAPPING[post_processing.extract_valence(data)]
-    energy = mappings.ENERGY_MAPPING[post_processing.extract_energy(data)]
-    danceability = mappings.DANCEABILITY_MAPPING[
-        post_processing.extract_danceability(data)
-    ]
-    tempo = mappings.TEMPO_MAPPING[post_processing.extract_tempo(data)]
-    genres = post_processing.extract_genres(data)
-    duration = post_processing.extract_duration(data)
-
-    # Query the database
-    db_manager = database_manager.DatabaseManager(DB_PATH)
-    playlist.clear()
-    playlist.songs = db_manager.query_songs_for_playlist_generation(
-        tempo, danceability, valence, energy, genres, duration
-    )
-
-    results = []
-    return jsonify(results), 201
-
-
-@app.route("/add_recommendations", methods=["GET"])
-def add_recommendations():
-    """Adds multiple songs to the recommendations list."""
-
-    track_ids = [song.track_id for song in playlist.songs]
-    db_path = os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../data/final_database.db")
-    )
-
-    # Get recommendations
-    recommendation_ids = rec.get_recommendations(
-        db_path=db_path, playlist_track_ids=track_ids
-    )
-
-    # Fetch song data from the database using track ids
-    db_manager = database_manager.DatabaseManager(db_path)
-    recommendation_songs = db_manager.fetch_songs_by_track_ids(recommendation_ids)
-
-    results = []
-    recommendations.clear()  # clear suggestions
-
-    for song in recommendation_songs:
-        result = recommendations.add_song(song)
-        if result == -1:
-            results.append(
-                {
-                    "error": f"'{song.track_name}' by {song.artist_0} is already in suggestions"
-                }
-            )
-        else:
-            results.append(
-                {
-                    "message": f"'{song.track_name}' by {song.artist_0} added to suggestions"
-                }
-            )
-    # recommendations.songs.sort(
-    #     key=lambda song: (
-    #         song.track_popularity if song.track_popularity is not None else 0
-    #     ),
-    #     reverse=True,
-    # )
-    return jsonify(results), 201
-
-
-@app.route("/delete_song", methods=["DELETE"])
-def delete_song():
-    """Delete a song from the playlist by track name."""
-    data = request.get_json()
-    track_name = data.get("track_name")
-
-    if not track_name:
-        return jsonify({"error": "track_name is required"}), 400
-
-    result = playlist.remove_song(track_name)
-
-    if result == -1:
-        db_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../data/final_database.db")
-        )
-        db_manager = database_manager.DatabaseManager(db_path)
-
-        results_db = db_manager.fetch_transformed_song_name(track_name)
-
-        if results_db is None:
-            return jsonify({"error": "The song is not in the playlist"}), 401
-
-        for song_name in results_db:
-            result = playlist.remove_song(song_name[0])
-
-            if result != -1:
-                break
-
-        if result == -1:  # Still not found
-            return (jsonify({"error": "The song is not in the playlist"}), 401)
-
-    return (
-        jsonify({"message": f"'{track_name}' has been removed from the playlist"}),
-        200,
-    )
-
-
-@app.route("/delete_songs_by_positions", methods=["DELETE"])
-def delete_songs():
-    """Delete songs from the playlist by positions."""
-    data = request.get_json()
-    positions = data.get("positions")
-
-    if not positions:
-        return jsonify({"error": "track_name is required"}), 400
-
-    result = playlist.remove_songs_by_positions(positions)
-
-    if result == -1:
-        return (jsonify({"error": "These positions are not available"}), 401)
-
-    return (
-        jsonify(
-            {
-                "message": f"Songs in positions:'{positions}' has been removed from the playlist"
-            }
-        ),
-        200,
-    )
-
-
-@app.route("/songs_string", methods=["GET"])
-def get_songs_as_string():
-    """Returns all songs in a single string, separated by a delimiter."""
-    # Uses the __str__ method for each Song object
-    songs_string = " // ".join([str(song) for song in playlist.songs])
-    return songs_string, 200
-
-
-@app.route("/clear_playlist", methods=["DELETE"])
-def clear_playlist():
-    """Delete all songs from the playlist."""
-    playlist.clear()  # Clear the playlist
-    return jsonify({"message": "All songs have been removed from the playlist"}), 200
-
-
-def parse_song_string(song_str: str) -> Tuple[Union[str, None], List[str]]:
-    """Parses a song string to extract the track name and artists.
-
-    Args:
-        song_str: String of the song with the format
-          "<song_name> by <artist_name_1>, <artist_name_2>, ..."
-
-    Returns:
-        A tuple consisting of the track name and a list of artists. Or None if
-        the song string is not in the correct format.
-    """
-    if " by " not in song_str:
-        return None, []
-    track_name, artists_str = song_str.split(" by ", 1)
-    artists = [artist.strip() for artist in artists_str.split(",")]
-    return track_name.strip(), artists
-
-
 @app.route("/add_to_playlist", methods=["POST"])
 def add_to_playlist():
     """Adds a song from the suggestions to the playlist."""
     data = request.get_json()
     song_str = data.get("song")
 
-    track_name, artists = parse_song_string(song_str)
+    track_name, artists = parsing.parse_song_string(song_str)
 
     if not track_name or not artists:
         return jsonify({"error": "Invalid song format"}), 400
@@ -440,6 +299,83 @@ def add_to_playlist():
         return jsonify({"error": "Song not found in suggestions"}), 404
 
 
+@app.route("/move_first_to_playlist", methods=["GET"])
+def move_first_to_playlist():
+    """Moves the first suggestion to the playlist."""
+    if not suggestions:
+        return jsonify({"error": "No suggestions available"}), 400
+
+    # Pop the first song from suggestions and add it to the playlist
+    song = suggestions.songs.pop(0)
+    playlist.songs.append(song)
+
+    return jsonify({"message": f"'{song}' moved to playlist"}), 200
+
+
+# **************** Recommendation Endpoints ****************
+
+
+@app.route("/recommendations", methods=["GET"])
+def get_recommendations():
+    """Returns the recommendations as strings with an indication if they are in
+    the playlist.
+
+    It is called from the `index.html` file to update the recommendations list.
+    """
+
+    playlist_track_ids = {song.track_id for song in playlist.songs}
+
+    recommendations_data = []
+    for song in recommendations.songs:
+        recommendation_entry = {
+            "message": str(song),
+            "disabled": song.track_id
+            in playlist_track_ids,  # Disable the button if the song is in the playlist
+        }
+        recommendations_data.append(recommendation_entry)
+
+    return jsonify(recommendations_data), 200
+
+
+@app.route("/add_recommendations", methods=["GET"])
+def add_recommendations():
+    """Adds multiple songs to the recommendations list."""
+
+    # Get track ids of the songs in the playlist
+    track_ids = [song.track_id for song in playlist.songs if song.track_id is not None]
+    db_path = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "../data/final_database.db")
+    )
+
+    # Get recommendations
+    recommendation_ids = rec.get_recommendations(
+        db_path=db_path, playlist_track_ids=track_ids
+    )
+
+    # Fetch song data from the database using track ids
+    db_manager = database_manager.DatabaseManager(db_path)
+    recommendation_songs = db_manager.fetch_songs_by_track_ids(recommendation_ids)
+
+    results = []
+    recommendations.clear()  # Clear recommendations
+
+    for song in recommendation_songs:
+        result = recommendations.add_song(song)
+        if result == -1:
+            results.append(
+                {
+                    "error": f"'{song.track_name}' by {song.artist_0} is already in suggestions"
+                }
+            )
+        else:
+            results.append(
+                {
+                    "message": f"'{song.track_name}' by {song.artist_0} added to suggestions"
+                }
+            )
+    return jsonify(results), 201
+
+
 @app.route("/add_recommendation_to_playlist", methods=["POST"])
 def add_recommendation_to_playlist():
     """Adds songs in the recommendations to the playlist."""
@@ -453,7 +389,7 @@ def add_recommendation_to_playlist():
     not_found_songs = []  # Lista per tracciare le canzoni non trovate
 
     for song_str in songs_data:
-        track_name, artists = parse_song_string(song_str)
+        track_name, artists = parsing.parse_song_string(song_str)
 
         if not track_name or not artists:
             not_found_songs.append(song_str)
@@ -489,26 +425,9 @@ def add_recommendation_to_playlist():
     )
 
 
-@app.route("/move_first_to_playlist", methods=["GET"])
-def move_first_to_playlist():
-    """
-    Moves the first suggestion to the playlist.
-    """
-    if not suggestions:
-        return jsonify({"error": "No suggestions available"}), 400
-
-    # Pop the first song from suggestions and add it to the playlist
-    song = suggestions.songs.pop(0)
-    playlist.songs.append(song)
-
-    return jsonify({"message": f"'{song}' moved to playlist"}), 200
-
-
 @app.route("/move_recommendation", methods=["POST"])
 def move_recommendation():
-    """
-    Moves a song from recommendations to the playlist based on artist match.
-    """
+    """Moves a song from recommendations to the playlist based on artist match."""
     # Get the list of artists from the request body
     data = request.json
     if not data or "artists" not in data:
@@ -545,6 +464,8 @@ def move_recommendation():
         200,
     )
 
+
+# **************** Run the app ****************
 
 if __name__ == "__main__":
     app.run(port=5002)
